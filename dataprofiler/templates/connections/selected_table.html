@@ -6,29 +6,30 @@
     <title>Selected Table</title>
 </head>
 <body>
-    <h1>Selected Table: {{ selected_database }}</h1>
     <h1>Selected Table: {{ selected_table }}</h1>
-    {% if error %}
-        <p>Error: {{ error }}</p>
-    {% else %}
-        <table>
-            <thead>
+    <div class="container mt-5">
+        <h1>Table Data</h1>
+        <table class="table table-bordered mt-3">
+            <thead class="thead-dark">
                 <tr>
-                    {% for column in data.0.keys %}
+                    <!-- Display column headers -->
+                    {% for column in columns %}
                         <th>{{ column }}</th>
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for row in data %}
+                <!-- Iterate over rows -->
+                {% for row in table_data %}
                     <tr>
-                        {% for value in row.values %}
-                            <td>{{ value }}</td>
+                        <!-- Iterate over cells in the row -->
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
                         {% endfor %}
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-    {% endif %}
+    </div>
 </body>
 </html>
