@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Database Tables</title>
+    <title>Select Table</title>
 </head>
 <body>
-    <h1>User Database Tables</h1>
-    <ul>
-        {% for table in tables %}
-            <li>{{ table }}</li>
-        {% endfor %}
-    </ul>
+    <h1>Select Table</h1>
+    <form action="{% url 'select_table' %}" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Select table:</legend>
+            {% for name in table %}
+                <input type="checkbox" id="{{ name }}" name="selected_table" value="{{ name }}">
+                <label for="{{ name }}">{{ name }}</label><br>
+            {% endfor %}
+        </fieldset>
+        <button type="submit">Submit</button>
+    </form>
 </body>
 </html>

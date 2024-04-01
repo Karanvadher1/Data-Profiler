@@ -1,7 +1,6 @@
 # Create your views here.
 from .utils import send_verification_email
 from .models import User
-from .forms import UserForm
 from django.contrib import auth,messages
 from django.contrib.auth.decorators import login_required
 
@@ -16,34 +15,33 @@ def home(request):
 
 def registeruser(request):
   if request.method == 'POST':
-    form = UserForm(request.POST)
-    if form.is_valid():
+    # form = UserForm(request.POST)
+    # if form.is_valid():
       #create user using form
       # password = form.cleaned_data['password']
       # user = form.save(commit=False)
       # user.set_password(password)
       
       #create user using create_user method
-      username = form.cleaned_data['username']
-      email = form.cleaned_data['email']
-      password = form.cleaned_data['password']
-      user = User.objects.create_user(username=username,email=email,password=password)
-      user.save()
+      username = request.POST.get('username')
+      email = request.POST.get('email')
+      password = request.POST.get('password')
+      confirm_password = request.POST.get('confirm_password')
+      if password != confirm_password:
+        messages.warning(request,'Confirm Password did not matched')
+        return redirect('registeruser')
+      else:
+        user = User.objects.create_user(username=username,email=email,password=password)
+        user.save()
       
-      #sending mail to user
-      mail_subject = 'please activate your acount'
-      email_template = 'emails/account_verification_email.html'
-      send_verification_email(request,user,mail_subject,email_template)
-      messages.success(request,'Your account has been registed succesfully!')
-      return redirect('login')
-    else:
-      return redirect('home')
+        #sending mail to user
+        mail_subject = 'please activate your acount'
+        email_template = 'emails/account_verification_email.html'
+        send_verification_email(request,user,mail_subject,email_template)
+        messages.success(request,'Your account has been registed succesfully!')
+        return redirect('login')
   else:
-    form = UserForm(request.POST)
-    context = {
-      'form':form
-    }
-    return render(request,'account/registeruser.html',context)
+    return render(request,'account/registeruser.html')
 
 
 def login(request):

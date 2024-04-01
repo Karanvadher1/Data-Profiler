@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Table</title>
+</head>
+<body>
+    <h1>Select Table</h1>
+    <form action="{% url 'select_database' %}" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Select table:</legend>
+            {% for database in database %}
+                <input type="checkbox" id="{{ database }}" name="selected_database" value="{{ database }}">
+                <label for="{{ database }}">{{ database }}</label><br>
+            {% endfor %}
+        </fieldset>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
