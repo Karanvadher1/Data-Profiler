@@ -1,33 +1,65 @@
 from django.http import HttpResponse
-import  mysql.connector
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from .database import get_mysql_connection
-
+from .models import Mysql_connector
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.decorators import login_required
 
 connection = None
-username = None
-password = None
 database = None
 
+@login_required(login_url='login')
+def check_connector(request):
+  connector = Mysql_connector.objects.get(user=request.user.id)
+  if connector:
+    # connection = get_mysql_connection(connector.username,connector.host,connector.password)
+    id = connector.id
+    service = connector.service_name
+    return render(request,'connections/my_connector.html',{'service':service,'connector_id':id})
+  return redirect('db_connection')
 
+@login_required(login_url='login')
+def select_connector(request, connector_id):
+  global connection
+  connector = get_object_or_404(Mysql_connector, id=connector_id)
+  if connector:
+    connection = get_mysql_connection(connector.username,connector.host,connector.password)
+    if connection.is_connected:
+      messages.success(request, 'Connected to MySQL database successfully')
+      return redirect('db_list')        
+    else:
+      messages.error(request, 'Failed to connect to MySQL database')
+  return render(request, 'account/dashboard.html')
+      
+      
+@login_required(login_url='login')  
 def db_connection(request):
-    global connection, username, password
+    global connection
     if request.method == 'POST':
         username = request.POST.get('username')
+        host = request.POST.get('host')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
         if password != confirm_password:
-            messages.warning(request, 'Confirm password did not match')
+          messages.warning(request, 'Confirm password did not match')
         else:
-            connection = get_mysql_connection(username, password)
-            if connection and connection.is_connected():
-                messages.success(request, 'Connected to MySQL database successfully')
-                return redirect('db_list')
-            else:
-                messages.error(request, 'Failed to connect to MySQL database')
-    
-    return render(request, 'connections/connection.html')
+          connection = get_mysql_connection(username, host, password)
+          if connection and connection.is_connected():
+            
+            Mysql_connector.objects.update_or_create(
+                    user=request.user,  # Assuming user is logged in
+                    defaults={
+                      'username': username,
+                      'password': password,
+                      'host': host
+                    }
+                )
+            messages.success(request, 'Connected to MySQL database successfully')
+            return redirect('db_list')
+          else:
+            messages.error(request, 'Failed to connect to MySQL database')
+    return render(request, 'connections/create_connector.html')
 
 
 def db_list(request):
@@ -48,13 +80,13 @@ def select_database(request):
   if request.method == 'POST':
     selected_database = request.POST.get('selected_database')
     database = selected_database
-    return redirect('table_list', database=database)
+    return redirect('table_list')
   else:
     return HttpResponse("Invalid request method")
 
    
-def table_list(request, database):
-    global connection
+def table_list(request):
+    global connection,database
     if connection.is_connected():
         cursor = connection.cursor()
         cursor.execute(f'USE {database}')  # Set the selected database
@@ -64,6 +96,7 @@ def table_list(request, database):
         return render(request, 'connections/tables.html', {'table': table})   
     else:
         return HttpResponse("Invalid credentials or no active connection")
+
 
 def select_table(request):
   if request.method == 'POST':
@@ -81,6 +114,5 @@ def selected_table(request, selected_table):
     cursor.execute(f'SELECT * FROM {selected_table}')
     table_data = cursor.fetchall()
     columns = [desc[0] for desc in cursor.description]
-    
-    return render(request, 'connections/selected_table.html', {'table_data': table_data, 'columns': columns})
+    return render(request, 'connections/selected_table.html', {'table_data': table_data, 'columns': columns,'selected_table':selected_table})
 

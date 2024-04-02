@@ -1,0 +1,31 @@
+{% load static %}
+{% include 'include/base.html'%}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>My Connector</title>
+</head>
+<body class="g-sidenav-show  bg-gray-200">
+  <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3   bg-gradient-dark" id="sidenav-main">
+    {%include 'account/sidebar.html'%}
+  </aside>
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
+    <!-- Navbar -->
+    {% include 'include/navbar.html'%}
+    <!-- End Navbar --> 
+    <form action="{% url 'select_connector' connector_id %}" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Select a Connector:</legend>
+            <input type="radio" id="connector_{{ connector.id }}" name="selected_connector" value="{{ connector.id }}">
+            <label for="connector_{{ connector.id }}"> {{service}} </label><br>
+        </fieldset>
+        <button type="submit">Select</button>
+    </form>
+    
+{%include 'include/script.html'%}
+  </main>
+{% include 'include/alerts.html' %}
+</body>
+
