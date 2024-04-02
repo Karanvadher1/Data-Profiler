@@ -11,3 +11,6 @@ class Mysql_connector(models.Model):
     username = models.CharField(max_length=100)
     host = models.GenericIPAddressField()
     password = models.CharField(max_length=100)
+    
+    
+
