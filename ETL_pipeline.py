@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from airflow.models import Variable
 import pandas as pd
 import numpy as np
+from airflow.models import DagRun
 from psycopg2.extensions import register_adapter, AsIs
 register_adapter(np.int64, AsIs)
 
@@ -76,6 +77,7 @@ def calculate_metrics_dag(**kwargs):
     table = kwargs['dag_run'].conf.get('selected_table')
     connector = kwargs['dag_run'].conf.get('connector')
     user = kwargs['dag_run'].conf.get('user')
+    ingestion_id = kwargs['dag_run'].conf.get('ingestion_id')
     
     ti = kwargs['ti']
     dataset = ti.xcom_pull(task_ids='fetch_data', key='source_data')
@@ -113,6 +115,12 @@ def calculate_metrics_dag(**kwargs):
         # Convert std_per_column_dict to a JSON string
         std_per_column_dict_json = json.dumps(std_per_column_dict)
 
+        #get dag status
+        dag_runs = DagRun.find(dag_id='etl_pipeline')
+        final_status = None
+        if dag_runs:
+            final_status = dag_runs[0].get_state()
+        print(final_status)
 
         # Print the metrics
         print(f"Number of Rows: {num_rows}")
@@ -124,17 +132,16 @@ def calculate_metrics_dag(**kwargs):
         #craeting postgress connection to website database
         postgres_conn_str = f"postgresql+psycopg2://postgres:postgres@localhost:5432/Dataprofiler"
         source_engine = create_engine(postgres_conn_str)
-        if source_engine:
+        if source_engine:            
             print("connected postgress database")
             with source_engine.connect() as connection:
                 try:
                     # Execute the insert query
                     connection.execute("""
                         INSERT INTO connectors_matrix (
-                            dataset, num_rows, num_columns, num_duplicate_rows, null_values_per_column,std_per_column_dict, connector_id, user_id
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (table, num_rows, num_columns, num_duplicate_rows, null_values_per_column_json,std_per_column_dict_json, connector, user))
+                            dataset, num_rows, num_columns, num_duplicate_rows, null_values_per_column,std_per_column_dict, ingestion_id,connector_id, user_id,status)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s,%s,%s)""",
+                        (table, num_rows, num_columns, num_duplicate_rows, null_values_per_column_json,std_per_column_dict_json, ingestion_id,connector, user,final_status))
                     print("Data stored successfully")
                 except Exception as e:
                     print(f"Failed to store data: {e}")
