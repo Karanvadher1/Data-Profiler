@@ -19,6 +19,13 @@
 
 <head>
     <title>Dashboard</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+    </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="g-sidenav-show  bg-gray-200">
   <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3   bg-gradient-dark" id="sidenav-main">
@@ -33,12 +40,12 @@
         <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
           <div class="card">
             <div class="card-header p-3 pt-2">
-              <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-                <i class="material-icons opacity-10">weekend</i>
+              <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                <i class="material-icons opacity-10">check_circle</i>
               </div>
               <div class="text-end pt-1">
-                <p class="text-sm mb-0 text-capitalize">Today's Money</p>
-                <h4 class="mb-0">$53k</h4>
+                <p class="text-sm mb-0 text-capitalize">Success </p>
+                <h4 class="mb-0">{{success}}</h4>
               </div>
             </div>
             <hr class="dark horizontal my-0">
@@ -51,11 +58,11 @@
           <div class="card">
             <div class="card-header p-3 pt-2">
               <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-                <i class="material-icons opacity-10">person</i>
+                <i class="material-icons opacity-10">error</i>
               </div>
               <div class="text-end pt-1">
-                <p class="text-sm mb-0 text-capitalize">Today's Users</p>
-                <h4 class="mb-0">2,300</h4>
+                <p class="text-sm mb-0 text-capitalize">Failed</p>
+                <h4 class="mb-0">{{failed}}</h4>
               </div>
             </div>
             <hr class="dark horizontal my-0">
@@ -68,10 +75,10 @@
           <div class="card">
             <div class="card-header p-3 pt-2">
               <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                <i class="material-icons opacity-10">person</i>
+                <i class="material-icons opacity-10">schedule</i>
               </div>
               <div class="text-end pt-1">
-                <p class="text-sm mb-0 text-capitalize">New Clients</p>
+                <p class="text-sm mb-0 text-capitalize">Scheduled</p>
                 <h4 class="mb-0">3,462</h4>
               </div>
             </div>
@@ -84,12 +91,12 @@
         <div class="col-xl-3 col-sm-6">
           <div class="card">
             <div class="card-header p-3 pt-2">
-              <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                <i class="material-icons opacity-10">weekend</i>
+              <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                <i class="material-icons opacity-10">assessment</i>
               </div>
               <div class="text-end pt-1">
-                <p class="text-sm mb-0 text-capitalize">Sales</p>
-                <h4 class="mb-0">$103,430</h4>
+                <p class="text-sm mb-0 text-capitalize">Total</p>
+                <h4 class="mb-0">{{total}}</h4>
               </div>
             </div>
             <hr class="dark horizontal my-0">
@@ -100,74 +107,194 @@
         </div>
       </div>
       <div class="row mt-4">
-        <div class="col-lg-4 col-md-6 mt-4 mb-4">
-          <div class="card z-index-2 ">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-              <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                <div class="chart">
-                  <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <h6 class="mb-0 ">Website Views</h6>
-              <p class="text-sm ">Last Campaign Performance</p>
-              <hr class="dark horizontal">
-              <div class="d-flex ">
-                <i class="material-icons text-sm my-auto me-1">schedule</i>
-                <p class="mb-0 text-sm"> campaign sent 2 days ago </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6 mt-4 mb-4">
-          <div class="card z-index-2  ">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-              <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
-                <div class="chart">
-                  <canvas id="chart-line" class="chart-canvas" height="170"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <h6 class="mb-0 "> Daily Sales </h6>
-              <p class="text-sm "> (<span class="font-weight-bolder">+15%</span>) increase in today sales. </p>
-              <hr class="dark horizontal">
-              <div class="d-flex ">
-                <i class="material-icons text-sm my-auto me-1">schedule</i>
-                <p class="mb-0 text-sm"> updated 4 min ago </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 mt-4 mb-3">
-          <div class="card z-index-2 ">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-              <div class="bg-gradient-dark shadow-dark border-radius-lg py-3 pe-1">
-                <div class="chart">
-                  <canvas id="chart-line-tasks" class="chart-canvas" height="170"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <h6 class="mb-0 ">Completed Tasks</h6>
-              <p class="text-sm ">Last Campaign Performance</p>
-              <hr class="dark horizontal">
-              <div class="d-flex ">
-                <i class="material-icons text-sm my-auto me-1">schedule</i>
-                <p class="mb-0 text-sm">just updated</p>
-              </div>
-            </div>
+        <div class="col-lg-12 col-md-12 mt-4 mb-4">
+          <div class="card z-index-2 p-5">
+            <h2>Ingestion Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Dataset</th>
+                  <th>Start Date</th>
+                  <th>Interval Start</th>
+                  <th>Interval End</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for data in ingestion_data %}
+                <tr onclick="submitFormAndToggleHiddenClass(this)" style="background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
+                  <!-- Move the form inside the first column -->
+                  <td>
+                    <form method="POST">
+                      {% csrf_token %}
+                      <input type="hidden" name="ingestion_id" value="{{ data.id }}">
+                    </form>
+                    {{ data.selected_table }}
+                  </td>
+                  <!-- The rest of the columns are not part of the form -->
+                  <td>{{ data.start_date }}</td>
+                  <td>{{ data.interval_start }}</td>
+                  <td>{{ data.interval_end }}</td>
+                  <td>{{ data.state }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <br>
+            <nav aria-label="Page navigation">
+              <ul class="pagination justify-content-center">
+                  {% if ingestion_data.paginator.num_pages > 1 %}
+                      {% if ingestion_data.has_previous %}
+                          <li class="page-item">
+                              <a class="page-link" href="?page={{ ingestion_data.previous_page_number }}" aria-label="Previous" style="text-decoration: none; color: #343a40;">
+                                  <span>&lsaquo;</span>
+                              </a>
+                          </li>
+                      {% endif %}
+          
+                      <li class="page-item">
+                          <span class="page-link">{{ ingestion_data.number }}</span>
+                      </li>
+          
+                      {% if ingestion_data.has_next %}
+                          <li class="page-item">
+                              <a class="page-link" href="?page={{ ingestion_data.next_page_number }}" aria-label="Next" style="text-decoration: none; color: #343a40;">
+                                <span>&rsaquo;</span>
+                              </a>
+                          </li>
+                      {% endif %}
+                  {% endif %}
+              </ul>
+            </nav>
           </div>
         </div>
       </div>
+      <div>
+      <div class="hidden" id="myDiv">
+        <div class="col-lg-12 col-md-12 mt-2 mb-2">
+          <div class ="card z-index-2 p-5" >
+            <h2>Matrix Details</h2>
+            <table>
+              <tr>
+                <th>Dataset</th>
+                <th>Number of Rows</th>
+                <th>Number of Columns</th>
+                <th>Number of Duplicate Rows</th>
+              </tr>
+              <tr>
+                <td>{{ matrix_data.dataset }}</td>
+                <td>{{ matrix_data.num_rows }}</td>
+                <td>{{ matrix_data.num_cols }}</td>
+                <td>{{ matrix_data.num_duplicate_row }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="row col-lg-12">
+          <div class="col-lg-6 col-md-6 mt-4 mb-4">
+            <div class ="card z-index-2 p-5" >
+              <h3>Null Values per Column</h3>
+              <table>
+                <tr>
+                  <th>Column</th>
+                  <th>Null Values</th>
+                </tr>
+                {% for column, value in matrix_data.null_values_per_column_dict.items %}
+                  <tr>
+                    <td>{{ column }}</td>
+                    <td>{{ value }}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 mt-4 mb-4">
+            <div class ="card z-index-2 p-5" style="height: 100%; width: 100%;">
+              <h3>Standard Deviation per Column</h3>
+              <table>
+                <tr>
+                    <th>Column</th>
+                    <th>Standard Deviation</th>
+                </tr>
+                {% for column, value in matrix_data.std_per_column.items %}
+                  <tr>
+                    <td>{{ column }}</td>
+                    <td>{{ value }}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-lg-6 col-md-6 mt-4 mb-4">
+            <div class="card z-index-2 ">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+                  <div class="chart">
+                    <canvas id="chart-bars" class="chart-canvas" height="300">
+                      <p id="columns" style="display: none;">{{columns}}</p>
+                      <p id="result" style="display: none;">{{null_values}}</p>  
+                    </canvas>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-body">
+                <h6 class="mb-0 ">Null Views</h6>
+                <hr class="dark horizontal">
+                <div class="d-flex ">
+                  <i class="material-icons text-sm my-auto me-1">schedule</i>
+                  <p class="mb-0 text-sm"> campaign sent 2 days ago </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 mt-4 mb-4">
+            <div class="card z-index-2  ">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+                  <div class="chart">
+                    <canvas id="chart-line" class="chart-canvas" height="300">
+                      <p id="col1" style="display: none;">{{col1}}</p>
+                      <p id="std" style="display: none;">{{std}}</p> 
+                    </canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <h6 class="mb-0 "> Standard Daviation </h6>
+                <hr class="dark horizontal">
+                <div class="d-flex ">
+                  <i class="material-icons text-sm my-auto me-1">schedule</i>
+                  <p class="mb-0 text-sm">just updated</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-{%include 'include/script.html'%}
-{% include 'include/footer.html'%}
+    <script>
+      function submitFormAndToggleHiddenClass(row) {
+        // Submit the form inside the row
+        var form = row.getElementsByTagName('form')[0];
+        form.submit();
+        
+        // Toggle the visibility of the div
+        var div = document.getElementById("myDiv");
+        if (div.classList.contains("hidden")) {
+          div.classList.remove("hidden");
+        } else {
+          div.classList.add("hidden");
+        }
+      }
+    </script>  
+{% include 'include/script.html' %}
+{% include 'include/footer.html' %}
   </main>
-  {% include 'include/alerts.html' %}
+  {% include 'include/alerts.html' %}  
+  
 </body>
-
-
 </html>
+

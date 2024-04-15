@@ -14,3 +14,7 @@
   z-index:99;
 }
 
+
+table.imagetable tr:hover > td {
+  background: #fff;
+}

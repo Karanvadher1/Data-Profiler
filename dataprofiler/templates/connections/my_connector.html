@@ -1,5 +1,6 @@
 {% load static %}
 {% include 'include/base.html'%}
+{% include 'include/formscript.html'%} 
 <!DOCTYPE html>
 <html lang="en">
 
@@ -14,16 +15,27 @@
     <!-- Navbar -->
     {% include 'include/navbar.html'%}
     <!-- End Navbar --> 
-    <form action="{% url 'select_connector' connector_id %}" method="post">
-        {% csrf_token %}
-        <fieldset>
-            <legend>Select a Connector:</legend>
-            <input type="radio" id="connector_{{ connector.id }}" name="selected_connector" value="{{ connector.id }}">
-            <label for="connector_{{ connector.id }}"> {{service}} </label><br>
-        </fieldset>
-        <button type="submit">Select</button>
-    </form>
-    
+    <div class="limiter">
+      <div class="container-login100" style="background-image: url({% static 'images/bg-01.jpg'%});">
+          <div class="wrap-login100 p-l-110 p-r-110 p-t-62 p-b-33">
+            <h1><center>Select Service</center></h1><br>
+              <form action="{% url 'select_connector' connector_id %}" method="post">
+                  {% csrf_token %}
+                  <div>
+                    <label class="wrap-input100-input validate-input" for="connector_{{ connector.id }}">
+                    <input type="radio" id="connector_{{ connector.id }}" name="selected_connector" value="{{ connector.id }}" style="margin-right: 1.5rcap;">
+                     {{service}} 
+                    </label><br>
+                  </div>
+                  <div class="container-login100-form-btn m-t-17">
+                    <button class="login100-form-btn" type="submit">
+                      Select
+                    </button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
 {%include 'include/script.html'%}
   </main>
 {% include 'include/alerts.html' %}

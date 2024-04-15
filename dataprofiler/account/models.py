@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager
 
 
 
+
 class UserManager(BaseUserManager):
   def create_user(self, username, email, password=None):
     if not email:
@@ -38,7 +39,7 @@ class User(AbstractBaseUser):
   username = models.CharField(max_length=50,unique=True)
   email = models.EmailField(max_length=100,unique=True)
 
-  #required field
+  #required static fields
   date_joined = models.DateTimeField(auto_now_add=True)
   last_login = models.DateTimeField(auto_now_add=True)
   created_date = models.DateTimeField(auto_now_add=True)
@@ -60,5 +61,6 @@ class User(AbstractBaseUser):
 
   def has_module_perms(self, app_label):
     return True
+
 
 

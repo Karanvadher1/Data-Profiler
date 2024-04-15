@@ -1,22 +1,46 @@
+{% load static %}
+{% include 'include/base.html'%}
+{% include 'include/formscript.html'%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Database</title>
+	<title>Database selection</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-    <h1>Select Database</h1>
-    <form action="{% url 'select_database' %}" method="post">
-        {% csrf_token %}
-        <fieldset>
-            <legend>Select Database:</legend>
-            {% for database in db %}
-                <input type="checkbox" id="{{ database }}" name="selected_database" value="{{ database }}">
-                <label for="{{ database }}">{{ database }}</label><br>
-            {% endfor %}
-        </fieldset>
-        <button type="submit">Submit</button>
-    </form>
+    <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3   bg-gradient-dark" id="sidenav-main">
+        {%include 'account/sidebar.html'%}
+    </aside>
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
+        <!-- Navbar -->
+        {% include 'include/navbar.html'%}
+        <!-- End Navbar --> 
+    <div class="limiter">
+        <div class="container-login100" style="background-image: url({% static 'images/bg-01.jpg'%});">
+            <div class="wrap-login100 p-l-110 p-r-110 p-t-62 p-b-33">
+                <h1><center>Select Database</center></h1><br>
+                <form action="{% url 'select_database' %}" method="post">
+                    {% csrf_token %}
+                    <div>
+                        {% for database in db %}
+                        <div>
+                            <label class="wrap-input100-input validate-input" >
+                                <input type="checkbox" id="{{ database }}" name="selected_database" value="{{ database }}" style="margin-right: 1.5rcap;">
+                                {{ database }}
+                            </label><br>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="container-login100-form-btn m-t-17">
+						<button class="login100-form-btn" type="submit">
+							Select
+						</button>
+					</div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% include 'include/alerts.html' %}
 </body>
 </html>

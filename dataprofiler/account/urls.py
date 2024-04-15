@@ -14,5 +14,8 @@ urlpatterns = [
    path('activate/<uidb64>/<token>',views.activate,name='activate'),
    
    path('dashboard/',views.dashboard,name='dashboard'), 
+   path('dashboard/', views.dashboard, name='dashboard_with_pagination'),
+   path('dashboard/<str:box_plot>/', views.dashboard, name='dashboard'),
+
 ]
 
