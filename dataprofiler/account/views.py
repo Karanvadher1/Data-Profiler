@@ -1,9 +1,11 @@
 # Create your views here.
 import base64
 from datetime import datetime
+import glob
 from io import BytesIO
 import io
 import json
+import os
 from connectors.models import Matrix,Ingestion
 from .utils import send_verification_email
 from .models import User
@@ -108,6 +110,9 @@ def dashboard(request):
   ingestion_data_list = []
   col1=[]
   std = []
+  box_column_data = []
+  box_value_data = []
+  
   
   for ingestion in ingestion_data:  
     data_dict = {
@@ -123,7 +128,22 @@ def dashboard(request):
   #getting ingestion record from user 
   if request.method == 'POST':
     selected_ingestion = request.POST.get('ingestion_id')
+    box_plot_data_query = Ingestion.objects.filter(id=selected_ingestion).values_list('box_plot_data').first()
+    if box_plot_data_query:
+      box_plot_data = box_plot_data_query[0]
+
+      # Extract column names and data from the box plot data dictionary
+      if box_plot_data is not None:
+        for column_name, values in box_plot_data.items():
+            # Append a tuple containing column name and its values to the list
+            box_column_data.append(column_name)
+            values_list = list(values.values())
+            box_value_data.append(values_list)
+      
+    # Prepare the data dictionary to pass to the template
     
+
+   
     if selected_ingestion:
       matrix = Matrix.objects.filter(ingestion_id=selected_ingestion).first()
       if matrix:
@@ -139,8 +159,8 @@ def dashboard(request):
         }
       else:
         matrix_data = None
+    
     if matrix_data:
-      
       null_values_per_column_dict = matrix_data.get('null_values_per_column_dict', {})
       columns = list(null_values_per_column_dict.keys())
       null_values = list(null_values_per_column_dict.values())
@@ -148,7 +168,7 @@ def dashboard(request):
       std_per_column = matrix_data.get('std_per_column')
       col1=list(std_per_column.keys())
       std = list(std_per_column.values())
-
+      
   paginator = Paginator(ingestion_data_list,5)
   page_number = request.GET.get('page')
   page_obj = paginator.get_page(page_number)  
@@ -156,7 +176,7 @@ def dashboard(request):
   success_count =  Ingestion.objects.filter(user_id=request.user.id).annotate(matrix_count=Count('matrix')).exclude(matrix_count=0).count()
   failed_count = Ingestion.objects.filter(user_id = request.user.id,matrix__isnull=True).annotate(matrix_count=Count('matrix')).filter(matrix_count=0).count()
   total_count = Ingestion.objects.filter(user_id=request.user.id).count()
-    
+  
   
   context = {
     'success':success_count,
@@ -167,8 +187,11 @@ def dashboard(request):
     'columns':json.dumps(columns),
     'null_values':json.dumps(null_values),
     'col1':json.dumps(col1),
-    'std':json.dumps(std)
+    'std':json.dumps(std),
   }
+  if box_column_data and box_value_data:
+      context['box_column_data'] = box_column_data
+      context['box_value_data'] = box_value_data
   return render(request,'account/dashboard.html',context)
 
 

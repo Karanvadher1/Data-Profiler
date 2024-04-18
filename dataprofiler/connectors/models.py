@@ -19,6 +19,7 @@ class Ingestion(models.Model):
   run_type = models.CharField(max_length=255)
   start_date = models.DateTimeField(auto_now_add=True)
   state = models.CharField(max_length=50)
+  box_plot_data = models.JSONField(null=True, blank=True)
   
   @classmethod
   def create_ingestion(cls, **kwargs):

@@ -17,5 +17,5 @@ urlpatterns = [
    path('dashboard/', views.dashboard, name='dashboard_with_pagination'),
    path('dashboard/<str:box_plot>/', views.dashboard, name='dashboard'),
 
-]
+] 
 
