@@ -1,0 +1,78 @@
+{% load static %}
+{% include 'include/base.html'%}
+{% include 'include/formscript.html'%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Database selection</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    .container {
+      text-align: center;
+      background-color: white;
+      padding: 20px; 
+      border-radius: 8px; 
+      width: fit-content;
+      display: inline-block; 
+      margin-right: 10px;
+      margin-bottom: 10px; 
+    }
+    .image-container {
+      display: inline-block;
+      margin-bottom: 10px; 
+    }
+    .image-container img {
+      display: block;
+      margin: 0 auto;
+      width: 165px;
+      height: 150px; 
+      border-radius: 8px;
+    }
+    .name {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+    <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3   bg-gradient-dark" id="sidenav-main">
+        {%include 'account/sidebar.html'%}
+    </aside>
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
+        <!-- Navbar -->
+        {% include 'include/navbar.html'%}
+        <!-- End Navbar --> 
+        <div class="limiter">
+          <div class="container-login100" style="background-image: url({% static 'images/bg-01.jpg'%});">
+            <div style="height: auto; width: auto;">
+              {% csrf_token %}
+              {% for warehouse in warehouses_info %} 
+                <div class="container">
+                  <div class="image-container">  
+                    <form id="warehouseForm" method="POST" action="{% url 'select_warehouse' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="warehouse" id="warehouseInput">
+                    </form>  
+                    <a href="#" onclick="submitForm('{{ warehouse.name }}')">
+                      <img src="{% static warehouse.image_path %}" alt="{{ warehouse.name }}">
+                      {{ warehouse.name }}
+                    </a>
+                    <script>
+                      function submitForm(warehouseName) {
+                          // Set the value of the hidden input field
+                          document.getElementById('warehouseInput').value = warehouseName;
+                          // Submit the form
+                          document.getElementById('warehouseForm').submit();
+                      }
+                  </script>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% include 'include/alerts.html' %}
+            </div>
+          </div>
+        </div>
+    {% include 'include/alerts.html' %}
+</body>
+</html>

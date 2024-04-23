@@ -53,4 +53,6 @@ class Matrix(models.Model):
 
 
 
-  
+class Data_Warehouse(models.Model):
+  warehouse_name = models.CharField(max_length=100)
+  warehouse_image = models.ImageField(upload_to='data_warehouse',blank=True,null=True)

@@ -23,7 +23,7 @@
                 <form action="{% url 'select_table' %}" method="post">
                     {% csrf_token %}
                     <div>
-                        {% for table in table %}
+                        {% for table in tables %}
                         <div>
                             <label class="wrap-input100-input validate-input" >
                                 <input type="checkbox" id="{{ table }}" name="selected_table" value="{{ table }}" style="margin-right: 1.5rcap;">

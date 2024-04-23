@@ -19,14 +19,16 @@
       <div class="container-login100" style="background-image: url({% static 'images/bg-01.jpg'%});">
           <div class="wrap-login100 p-l-110 p-r-110 p-t-62 p-b-33">
             <h1><center>Select Service</center></h1><br>
-              <form action="{% url 'select_connector' connector_id %}" method="post">
+              <form action="{% url 'select_connector' %}" method="post">
                   {% csrf_token %}
+                  {% for connector in connector_details%}
                   <div>
                     <label class="wrap-input100-input validate-input" for="connector_{{ connector.id }}">
-                    <input type="radio" id="connector_{{ connector.id }}" name="selected_connector" value="{{ connector.id }}" style="margin-right: 1.5rcap;">
-                     {{service}} 
+                    <input type="radio" id="connector_{{ connector.id }}" name="connector_id" value="{{ connector.id }}" style="margin-right: 1.5rcap;">
+                     {{connector.service}} 
                     </label><br>
                   </div>
+                  {% endfor %}
                   <div class="container-login100-form-btn m-t-17">
                     <button class="login100-form-btn" type="submit">
                       Select
