@@ -171,217 +171,158 @@
         </div>
       </div>
     
-      <div id="hiddenDiv" class="hidden">
-        <div class="col-lg-12 col-md-12 mt-2 mb-2">
-          <div class ="card z-index-2 p-5" >
-            <h2>Matrix Details</h2>
-            <table>
-              <tr>
-                <th>Dataset</th>
-                <th>Number of Rows</th>
-                <th>Number of Columns</th>
-                <th>Number of Duplicate Rows</th>
-              </tr>
-              <tr>
-                <td>{{ matrix_data.dataset }}</td>
-                <td>{{ matrix_data.num_rows }}</td>
-                <td>{{ matrix_data.num_cols }}</td>
-                <td>{{ matrix_data.num_duplicate_row }}</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-        <div class="row col-lg-12">
-          <div class="col-lg-6 col-md-6 mt-4 mb-4">
+        <div id="hiddenDiv" class="hidden">
+          <div class="col-lg-12 col-md-12 mt-2 mb-2">
             <div class ="card z-index-2 p-5" >
-              <h3>Null Values per Column</h3>
+              <h2>Matrix Details</h2>
               <table>
                 <tr>
-                  <th>Column</th>
-                  <th>Null Values</th>
+                  <th>Dataset</th>
+                  <th>Number of Rows</th>
+                  <th>Number of Columns</th>
+                  <th>Number of Duplicate Rows</th>
                 </tr>
-                {% for column, value in matrix_data.null_values_per_column_dict.items %}
-                  <tr>
-                    <td>{{ column }}</td>
-                    <td>{{ value }}</td>
-                  </tr>
-                {% endfor %}
+                <tr>
+                  <td>{{ matrix_data.dataset }}</td>
+                  <td>{{ matrix_data.num_rows }}</td>
+                  <td>{{ matrix_data.num_cols }}</td>
+                  <td>{{ matrix_data.num_duplicate_row }}</td>
+                </tr>
               </table>
             </div>
           </div>
-          <div class="col-lg-6 col-md-6 mt-4 mb-4">
-            <div class ="card z-index-2 p-5" style="height: 100%; width: 100%;">
-              <h3>Standard Deviation per Column</h3>
-              <table>
-                <tr>
-                    <th>Column</th>
-                    <th>Standard Deviation</th>
-                </tr>
-                {% for column, value in matrix_data.std_per_column.items %}
+          <div class="row col-lg-12">
+            <div class="col-lg-6 col-md-6 mt-4 mb-4">
+              <div class ="card z-index-2 p-5" >
+                <h3>Null Values per Column</h3>
+                <table>
                   <tr>
-                    <td>{{ column }}</td>
-                    <td>{{ value }}</td>
+                    <th>Column</th>
+                    <th>Null Values</th>
                   </tr>
-                {% endfor %}
-              </table>
+                  {% for column, value in matrix_data.null_values_per_column_dict.items %}
+                    <tr>
+                      <td>{{ column }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  {% endfor %}
+                </table>
+              </div>
             </div>
+            <div class="col-lg-6 col-md-6 mt-4 mb-4">
+              <div class ="card z-index-2 p-5" style="height: 100%; width: 100%;">
+                <h3>Standard Deviation per Column</h3>
+                <table>
+                  <tr>
+                      <th>Column</th>
+                      <th>Standard Deviation</th>
+                  </tr>
+                  {% for column, value in matrix_data.std_per_column.items %}
+                    <tr>
+                      <td>{{ column }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  {% endfor %}
+                </table>
+              </div>
+              </div>
+          </div>
+          <div class="row col-lg-12">
+            <div class="col-lg-6 col-md-6 mb-4">
+              <div class="card z-index-2 ">
+                <div class="card-header mx-3 z-index-2 bg-transparent">
+                  <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+                    <div class="chart">
+                      <canvas id="chart-bars" class="chart-canvas" height="300">
+                        <p id="columns" style="display: none;">{{columns}}</p>
+                        <p id="result" style="display: none;">{{null_values}}</p>  
+                      </canvas>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="card-body">
+                  <h6 class="mb-0 ">Null Views</h6>
+                  <hr class="dark horizontal">
+                  <div class="d-flex ">
+                    <i class="material-icons text-sm my-auto me-1">schedule</i>
+                    <p class="mb-0 text-sm"> campaign sent 2 days ago </p>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
-        <div class="row col-lg-12">
-          <div class="col-lg-6 col-md-6 mb-4">
+            <div class="col-lg-6 col-md-6 mb-4">
+              <div class="card z-index-2  ">
+                <div class="card-header mx-3 z-index-2 bg-transparent">
+                  <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+                    <div class="chart">
+                      <canvas id="chart-line" class="chart-canvas" height="300">
+                        <p id="col1" style="display: none;">{{col1}}</p>
+                        <p id="std" style="display: none;">{{std}}</p> 
+                      </canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <h6 class="mb-0 "> Standard Daviation </h6>
+                  <hr class="dark horizontal">
+                  <div class="d-flex ">
+                    <i class="material-icons text-sm my-auto me-1">schedule</i>
+                    <p class="mb-0 text-sm">just updated</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-12">
             <div class="card z-index-2 ">
               <div class="card-header mx-3 z-index-2 bg-transparent">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                  <div class="chart">
-                    <canvas id="chart-bars" class="chart-canvas" height="300">
-                      <p id="columns" style="display: none;">{{columns}}</p>
-                      <p id="result" style="display: none;">{{null_values}}</p>  
-                    </canvas>
+                  <div id="boxplot" class="row col-lg-12">
+                    <p id="key" style="display: none;">{{box_column_data}}</p>
+                    <p id="value" style="display: none;">{{box_value_data}}</p>
                   </div>
-                </div>
-              </div>
-              
-              <div class="card-body">
-                <h6 class="mb-0 ">Null Views</h6>
-                <hr class="dark horizontal">
-                <div class="d-flex ">
-                  <i class="material-icons text-sm my-auto me-1">schedule</i>
-                  <p class="mb-0 text-sm"> campaign sent 2 days ago </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-6 col-md-6 mb-4">
-            <div class="card z-index-2  ">
-              <div class="card-header mx-3 z-index-2 bg-transparent">
-                <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
-                  <div class="chart">
-                    <canvas id="chart-line" class="chart-canvas" height="300">
-                      <p id="col1" style="display: none;">{{col1}}</p>
-                      <p id="std" style="display: none;">{{std}}</p> 
-                    </canvas>
-                  </div>
-                </div>
-              </div>
-              <div class="card-body">
-                <h6 class="mb-0 "> Standard Daviation </h6>
-                <hr class="dark horizontal">
-                <div class="d-flex ">
-                  <i class="material-icons text-sm my-auto me-1">schedule</i>
-                  <p class="mb-0 text-sm">just updated</p>
-                </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-lg-12 mb-4">
-          <div class="card z-index-2 ">
-            <div class="card-header mx-3 z-index-2 bg-transparent">
-                <div id="boxplot" class="row col-lg-12">
-                  <p id="key" style="display: none;">{{box_column_data}}</p>
-                  <p id="value" style="display: none;">{{box_value_data}}</p>
-                </div>
-            </div>
-          </div>
-        </div> 
-        <div class="col-lg-12 mb-4" >
-          <div class="card z-index-2 ">
-            <div class="card-header mx-3 z-index-2 bg-transparent">
-              <div id="myDiv" class="card-header mx-3 z-index-2 bg-transparent">
-              </div>
-            </div>
-          </div>
-        </div> 
-      </div>
 
   <!-- Your JavaScript code for defining traces and layout -->
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-  // Check if matrix dataset exists
-  var matrixDataset = "{{ matrix_data.dataset }}";
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Check if matrix dataset exists
+      var matrixDataset = "{{ matrix_data.dataset }}";
 
-  // Get the div element with the hidden class
-  var hiddenDiv = document.querySelector('.hidden');
+      // Get the div element with the hidden class
+      var hiddenDiv = document.querySelector('.hidden');
 
-  // If matrix dataset exists, remove the hidden class from the div
-  if (matrixDataset && hiddenDiv) {
-    hiddenDiv.classList.remove('hidden');
-  }
-});
-
-let key = eval(document.querySelector('#key').innerHTML)
-let value = eval(document.querySelector('#value').innerHTML)
-let data = key.map((k, index )=> {
-return {
-  name: k,
-  y: value[index],
-  type: 'box',
-  marker: {
-        color: `hsl(${(index * 360 / key.length)}, 50%, 50%)`
-      },
-      boxpoints: 'suspectedoutliers',
-  }  
-})
-var layout = {
-  title: 'Box Plot Styling Mean and Standard Deviation',
-  width: 1450, // Set the width of the plot
-  height: 500
-};
-// Plot the box plots
-Plotly.newPlot('boxplot', data,layout);
-
-
-function generatePairs(arr) {
-    return arr.flatMap((num1, index1) => 
-        arr.slice(index1 + 1).map((num2, index2) => [num1, num2])
-    ).filter(([num1, num2], index, self) => {
-        const reversePair = [num2, num1];
-        // Check if the reverse pair doesn't exist already
-        return !self.some(([existingNum1, existingNum2], i) => 
-            i < index && existingNum1 === num2 && existingNum2 === num1
-        );
+      // If matrix dataset exists, remove the hidden class from the div
+      if (matrixDataset && hiddenDiv) {
+        hiddenDiv.classList.remove('hidden');
+      }
     });
-}
 
-
-const value_pairs = generatePairs(value);
-const key_pairs = generatePairs(key);
-// Extract x and y coordinates from pairs
-
-key_pairs.forEach((name, index) => {
-  let xLabel = name[0]
-  let yLabel = name[1]
-  let xVal = value_pairs[index][0]
-  let yVal = value_pairs[index][1]
-  
-  // Create scatter plot
-  const daataa = [{
-      x: xVal,
-      y: yVal,
-      mode: 'markers',
-      type: 'scatter'
-  }];
-  var layout1 = {
-    title: `${xLabel} vs ${yLabel}`,  // Set title of the plot
-    xaxis: {
-        title: xLabel // Set title for x-axis
-    },
-    yaxis: {
-        title: yLabel // Set title for y-axis
-    },
-    width: 1450, // Set the width of the plot
-    height: 500
-  };
-const newDiv = document.createElement("div");
-
-// Set the id attribute of the div
-newDiv.id = `scatterPlot-${index + 1}`;
-
-// Append the div to the body (or any other parent element)
-document.getElementById('myDiv').appendChild(newDiv);
-Plotly.newPlot(`scatterPlot-${index + 1}`, daataa,layout1);
-})
+    let key = eval(document.querySelector('#key').innerHTML)
+    let value = eval(document.querySelector('#value').innerHTML)
+    let data = key.map((k, index )=> {
+    return {
+      name: k,
+      y: value[index],
+      type: 'box',
+      marker: {
+            color: `hsl(${(index * 360 / key.length)}, 50%, 50%)`
+          },
+          boxpoints: 'suspectedoutliers',
+    }  
+  })
+    var layout = {
+      title: 'Box Plot Styling Mean and Standard Deviation',
+      width: 1450, // Set the width of the plot
+      height: 500
+    };
+    // Plot the box plots
+  Plotly.newPlot('boxplot', data,layout);
 </script>
+        
 {% include 'include/script.html' %}
 {% include 'include/footer.html' %}
 </main>
