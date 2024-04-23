@@ -284,6 +284,15 @@
               </div>
             </div>
           </div>
+          <div class="col-lg-12 mb-4" >
+            <div class="card z-index-2 ">
+              <div class="card-header mx-3 z-index-2 bg-transparent">
+                <div id="myDiv" class="card-header mx-3 z-index-2 bg-transparent">
+                </div>
+              </div>
+            </div>
+          </div>
+        
         </div>
 
   <!-- Your JavaScript code for defining traces and layout -->
@@ -321,6 +330,56 @@
     };
     // Plot the box plots
   Plotly.newPlot('boxplot', data,layout);
+
+  function generatePairs(arr) {
+    return arr.flatMap((num1, index1) => 
+        arr.slice(index1 + 1).map((num2, index2) => [num1, num2])
+    ).filter(([num1, num2], index, self) => {
+        const reversePair = [num2, num1];
+        // Check if the reverse pair doesn't exist already
+        return !self.some(([existingNum1, existingNum2], i) => 
+            i < index && existingNum1 === num2 && existingNum2 === num1
+        );
+    });
+}
+
+
+const value_pairs = generatePairs(value);
+const key_pairs = generatePairs(key);
+// Extract x and y coordinates from pairs
+
+key_pairs.forEach((name, index) => {
+  let xLabel = name[0]
+  let yLabel = name[1]
+  let xVal = value_pairs[index][0]
+  let yVal = value_pairs[index][1]
+
+  // Create scatter plot
+  const daataa = [{
+      x: xVal,
+      y: yVal,
+      mode: 'markers',
+      type: 'scatter'
+  }];
+  var layout1 = {
+    title: `${xLabel} vs ${yLabel}`,  // Set title of the plot
+    xaxis: {
+        title: xLabel // Set title for x-axis
+    },
+    yaxis: {
+        title: yLabel // Set title for y-axis
+    },
+    width: 1450, // Set the width of the plot
+    height: 500
+  };
+const newDiv = document.createElement("div");
+
+// Set the id attribute of the div
+newDiv.id = `scatterPlot-${index + 1}`;
+document.getElementById('myDiv').appendChild(newDiv);
+Plotly.newPlot(`scatterPlot-${index + 1}`, daataa,layout1);
+})
+
 </script>
         
 {% include 'include/script.html' %}

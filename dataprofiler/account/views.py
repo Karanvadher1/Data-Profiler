@@ -34,14 +34,6 @@ def home(request):
 
 def registeruser(request):
   if request.method == 'POST':
-    # form = UserForm(request.POST)
-    # if form.is_valid():
-      #create user using form
-      # password = form.cleaned_data['password']
-      # user = form.save(commit=False)
-      # user.set_password(password)
-      
-      #create user using create_user method
       username = request.POST.get('username')
       email = request.POST.get('email')
       password = request.POST.get('password')

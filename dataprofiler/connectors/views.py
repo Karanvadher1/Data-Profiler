@@ -51,7 +51,7 @@ def select_connector(request):
         else:
           messages.error(request, 'Failed to connect to MySQL database')
       if connector.service_name.lower() == 'postgres':
-        user_warehouse = 'postgresql'
+        user_warehouse = 'postgres'
         connection = get_postgresql_connection(connector.username,connector.host,connector.password,connector.database)
         if connection != None:
           messages.success(request, f'Connected to PostgreSQL Database : {connector.database} successfully')
@@ -82,7 +82,6 @@ def select_warehouse(request):
   global user_warehouse
   if request.method == "POST":
     user_warehouse = request.POST.get('warehouse')
-    print("selected warehouse is:",user_warehouse)
     if user_warehouse.lower() == 'mysql':
       return redirect('Mysql_connection')
     if user_warehouse.lower() == 'postgresql':
@@ -134,7 +133,7 @@ def PostgreSQL_connection(request):
       connection = get_postgresql_connection(username, host, password,database)
       if connection and connection != None:  
         Mysql_connector.objects.update_or_create(
-          service_name = 'postgres',
+          service_name = 'postgresql',
           user=request.user,  
           username= username,
           password= password,
@@ -150,6 +149,7 @@ def PostgreSQL_connection(request):
    
 def table_list(request):
   global connection, database, user_warehouse
+  print(user_warehouse)
   try:  
     if connection != None:
       if user_warehouse.lower() == 'mysql':
@@ -183,7 +183,10 @@ def selected_table(request, selected_table):
   global connection,user_warehouse
   if connection != None:
     try:
-      connector = Mysql_connector.objects.get(user=request.user.id,service_name = user_warehouse)
+      print(request.user.id)
+      print(user_warehouse)
+      connector = Mysql_connector.objects.get(user=request.user.id,service_name = user_warehouse.lower())
+      print(connector)
       user_instance = User.objects.get(id=request.user.id)
       # Triggering airflow DAGs
       dag_id = 'etl_pipeline'
@@ -203,8 +206,6 @@ def selected_table(request, selected_table):
             'user': user_instance
           }
           ingestion_instance = Ingestion.create_ingestion(**data)
-          
-          
           # Fetch data from the database
           result = connection.execute(f'SELECT * FROM {table}').fetchall()
           # Convert SQLAlchemy object into dict
@@ -237,9 +238,6 @@ def selected_table(request, selected_table):
           message = f"Error triggering DAG {dag_id}: {e}"
     except Mysql_connector.DoesNotExist:
       return HttpResponse("User credentials not found")
-  
     return HttpResponse(message)
   else:
       return HttpResponse("Connection is not established.")
-      
-      
