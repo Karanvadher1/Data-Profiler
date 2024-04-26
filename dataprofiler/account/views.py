@@ -1,28 +1,23 @@
 # Create your views here.
-import base64
 from datetime import datetime
-import glob
-from io import BytesIO
-import io
 import json
-import os
+
+import pandas as pd
 from connectors.models import Matrix,Ingestion
 from .utils import send_verification_email
 from .models import User
 from django.contrib import auth,messages
 from django.contrib.auth.decorators import login_required
-
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import render,redirect
 from django.core.paginator import Paginator
-import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import seaborn as sns
 from django.db.models import Count
-
-
+from django.db.models import Count, Exists, OuterRef
+import tensorflow as tf
+import tensorflow_probability as tfp
 
 def home(request):
   if request.user.is_authenticated:
@@ -34,23 +29,22 @@ def home(request):
 
 def registeruser(request):
   if request.method == 'POST':
-      username = request.POST.get('username')
-      email = request.POST.get('email')
-      password = request.POST.get('password')
-      confirm_password = request.POST.get('confirm_password')
-      if password != confirm_password:
-        messages.warning(request,'Confirm Password did not matched')
-        return redirect('registeruser')
-      else:
-        user = User.objects.create_user(username=username,email=email,password=password)
-        user.save()
-      
-        #sending mail to user
-        mail_subject = 'please activate your acount'
-        email_template = 'emails/account_verification_email.html'
-        send_verification_email(request,user,mail_subject,email_template)
-        messages.success(request,'Your account has been registed succesfully!')
-        return redirect('login')
+    username = request.POST.get('username')
+    email = request.POST.get('email')
+    password = request.POST.get('password')
+    confirm_password = request.POST.get('confirm_password')
+    if password != confirm_password:
+      messages.warning(request,'Confirm Password did not matched')
+      return redirect('registeruser')
+    else:
+      user = User.objects.create_user(username=username,email=email,password=password)
+      user.save()
+      #sending mail to user
+      mail_subject = 'please activate your acount'
+      email_template = 'emails/account_verification_email.html'
+      send_verification_email(request,user,mail_subject,email_template)
+      messages.success(request,'Your account has been registed succesfully!')
+      return redirect('login')
   else:
     return render(request,'account/registeruser.html')
 
@@ -74,27 +68,25 @@ def login(request):
 
 
 def activate(request,uidb64,token):
-    # Activate the user by setting the activate status to true
-    try:
-      uid = urlsafe_base64_decode(uidb64).decode()
-      user = User._default_manager.get(pk=uid)
-    except(TypeError, ValueError,OverflowError,User.DoesNotExist):
-      user = None
+  # Activate the user by setting the activate status to true
+  try:
+    uid = urlsafe_base64_decode(uidb64).decode()
+    user = User._default_manager.get(pk=uid)
+  except(TypeError, ValueError,OverflowError,User.DoesNotExist):
+    user = None
 
-    if user is not None and default_token_generator.check_token(user, token):
-      user.is_active = True
-      user.save()
-      messages.success(request,'Congratulation! your account is activated')
-      return redirect('login')
-    else:
-      messages.error(request,'Invalid activation link')
-      return redirect('account/registeruser')
+  if user is not None and default_token_generator.check_token(user, token):
+    user.is_active = True
+    user.save()
+    messages.success(request,'Congratulation! your account is activated')
+    return redirect('login')
+  else:
+    messages.error(request,'Invalid activation link')
+    return redirect('account/registeruser')
 
 
 @login_required(login_url='login')
 def dashboard(request):
-  ingestion_data = Ingestion.objects.filter(user_id=request.user.id).order_by('-start_date').all()
-
   matrix_data = []
   matrix = None
   columns = []
@@ -104,38 +96,58 @@ def dashboard(request):
   std = []
   box_column_data = []
   box_value_data = []
-  
-  
+
+  ingestion_data = Ingestion.objects.filter(user_id=request.user.id).order_by('-start_date').all()
+ 
   for ingestion in ingestion_data:  
+  
     data_dict = {
-        'id':ingestion.id,
-        'selected_table': json.loads(ingestion.conf)['selected_table'],
-        'start_date': ingestion.start_date.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
-        'interval_start': ingestion.data_interval_start.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
-        'interval_end': ingestion.data_interval_end.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
-        'state': ingestion.state
+      'id':ingestion.id,
+      'selected_table': json.loads(ingestion.conf)['selected_table'],
+      'start_date': ingestion.start_date.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
+      'interval_start': ingestion.data_interval_start.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
+      'interval_end': ingestion.data_interval_end.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
+      'state': ingestion.state
     }
     ingestion_data_list.append(data_dict)  
-
   #getting ingestion record from user 
   if request.method == 'POST':
     selected_ingestion = request.POST.get('ingestion_id')
     box_plot_data_query = Ingestion.objects.filter(id=selected_ingestion).values_list('box_plot_data').first()
+    
     if box_plot_data_query:
       box_plot_data = box_plot_data_query[0]
-
       # Extract column names and data from the box plot data dictionary
       if box_plot_data is not None:
         for column_name, values in box_plot_data.items():
-            # Append a tuple containing column name and its values to the list
-            box_column_data.append(column_name)
-            values_list = list(values.values())
-            box_value_data.append(values_list)
-      
+          # Append a tuple containing column name and its values to the list
+          box_column_data.append(column_name)
+          values_list = list(values.values())
+          box_value_data.append(values_list)
+            
+    if box_value_data is not None:
+      try:
+        
+        box_value_dataframe = pd.DataFrame(box_value_data)
+        box_value_tensor = tf.constant(box_value_dataframe.values, dtype=tf.float32)
+        correlation_matrix = tfp.stats.correlation(box_value_tensor, sample_axis=0)
+        rounded_correlation_matrix = tf.round(correlation_matrix, 4)
+        print("Correlation Matrix:")
+        print(correlation_matrix)
+        print(rounded_correlation_matrix)
+        # mean = tf.reduce_mean(box_value_tensor, axis=0)
+        # print(mean)
+        # stddev = tf.sqrt(tf.reduce_mean(tf.square(box_value_tensor - mean), axis=0))
+        # print(stddev)
+        # normalized_data = (box_value_tensor - mean) / stddev
+        # correlation_matrix = tf.matmul(box_value_tensor, box_value_tensor, transpose_a=True) / tf.cast(tf.shape(normalized_data)[0], tf.float32)
+        # Corr_Matrix = tf.round(box_value_tensor.corr(),2)
+        # print('coreellaattion:',Corr_Matrix)
+        # print(box_value_dataframe)
+      except Exception as e:
+        print("An error occurred:", e)
     # Prepare the data dictionary to pass to the template
     
-
-   
     if selected_ingestion:
       matrix = Matrix.objects.filter(ingestion_id=selected_ingestion).first()
       if matrix:
@@ -147,7 +159,6 @@ def dashboard(request):
           'num_duplicate_row': matrix.num_duplicate_rows,
           'null_values_per_column_dict': matrix.null_values_per_column,
           'std_per_column': matrix.std_per_column_dict,
-          # Add more fields as needed
         }
       else:
         matrix_data = None
@@ -165,10 +176,9 @@ def dashboard(request):
   page_number = request.GET.get('page')
   page_obj = paginator.get_page(page_number)  
 
-  success_count =  Ingestion.objects.filter(user_id=request.user.id).annotate(matrix_count=Count('matrix')).exclude(matrix_count=0).count()
+  success_count = Ingestion.objects.filter(matrix__isnull=False, user_id=request.user.id).distinct().count()
   failed_count = Ingestion.objects.filter(user_id = request.user.id,matrix__isnull=True).annotate(matrix_count=Count('matrix')).filter(matrix_count=0).count()
   total_count = Ingestion.objects.filter(user_id=request.user.id).count()
-  
   
   context = {
     'success':success_count,

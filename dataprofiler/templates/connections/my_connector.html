@@ -17,29 +17,44 @@
     <!-- End Navbar --> 
     <div class="limiter">
       <div class="container-login100" style="background-image: url({% static 'images/bg-01.jpg'%});">
-          <div class="wrap-login100 p-l-110 p-r-110 p-t-62 p-b-33">
-            <h1><center>Select Service</center></h1><br>
-              <form action="{% url 'select_connector' %}" method="post">
-                  {% csrf_token %}
-                  {% for connector in connector_details%}
-                  <div>
-                    <label class="wrap-input100-input validate-input" for="connector_{{ connector.id }}">
-                    <input type="radio" id="connector_{{ connector.id }}" name="connector_id" value="{{ connector.id }}" style="margin-right: 1.5rcap;">
-                     {{connector.service}} 
-                    </label><br>
+        <div class="wrap-login100 p-l-110 p-r-110 p-t-62 p-b-33">
+          <h1><center>Select Service</center></h1><br>
+            <form action="{% url 'select_connector' %}" method="post">
+              {% csrf_token %}
+              {% for connector in connector_details%}
+              <div class="d-flex align-items-baseline justify-content-between">
+                <label class="wrap-input100-input validate-input d-flex align-items-baseline justify-content-between" for="connector_{{ connector.username }}">
+                  <div class="input-and-label">
+                    <input type="radio" id="connector_{{ connector.username }}" name="connector_id" value="{{ connector.username }}" style="margin-right: 1.5rcap;">
+                    {{connector.service}}
                   </div>
-                  {% endfor %}
-                  <div class="container-login100-form-btn m-t-17">
-                    <button class="login100-form-btn" type="submit">
-                      Select
-                    </button>
-                  </div>
-              </form>
-          </div>
+                  <p>{{connector.username}}</p> 
+                </label>
+                <button type="button" class="delete-btn" data-id="{{ connector.id }}" style="color: red;" onclick="deleteConnector({{ connector.id }})">
+                  <i class="fas fa-trash"></i>
+                </button>                
+              </div><br>
+              {% endfor %}
+              <div class="container-login100-form-btn m-t-17">
+                <button class="login100-form-btn" type="submit">
+                  Select
+                </button>
+              </div>
+            </form>
+        </div>
       </div>
-  </div>
+    </div>
 {%include 'include/script.html'%}
   </main>
 {% include 'include/alerts.html' %}
+<script>
+  function deleteConnector(connectorId) {
+    if (confirm('Are you sure you want to delete this connector?')) {
+      var deleteUrl = "{% url 'delete_connector' %}?delete_connector_id=" + connectorId;
+      window.location.href = deleteUrl;
+    }
+  }
+  </script>
+  
 </body>
 

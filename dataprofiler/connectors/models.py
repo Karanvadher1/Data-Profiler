@@ -2,11 +2,23 @@ from django.db import models
 from account.models import User
 
 
+
 # Create your models here.
 # class Connector(models.Model):
 
+
+
+class Mysql_connector(models.Model):
+  user = models.ForeignKey(User, on_delete=models.CASCADE)
+  service_name = models.CharField(max_length=100,default = 'mysql')
+  username = models.CharField(max_length=100)
+  host = models.GenericIPAddressField()
+  password = models.CharField(max_length=100)
+    
+    
 class Ingestion(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE)
+  connector = models.ForeignKey(Mysql_connector,on_delete=models.CASCADE)
   conf = models.TextField()
   dag_id = models.CharField(max_length=255)
   dag_run_id = models.CharField(max_length=255)
@@ -27,15 +39,6 @@ class Ingestion(models.Model):
   
   def __str__(self):
       return f"DAG Run ID: {self.dag_run_id}, State: {self.state}"
-
-
-class Mysql_connector(models.Model):
-  user = models.ForeignKey(User, on_delete=models.CASCADE)
-  service_name = models.CharField(max_length=100,default = 'mysql')
-  username = models.CharField(max_length=100)
-  database = models.CharField(max_length=100)
-  host = models.GenericIPAddressField()
-  password = models.CharField(max_length=100)
     
     
 class Matrix(models.Model):

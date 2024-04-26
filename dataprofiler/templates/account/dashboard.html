@@ -123,7 +123,7 @@
               </thead>
               <tbody>
                 {% for data in ingestion_data %}
-                <tr onclick="this.getElementsByTagName('form')[0].submit()" style="background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
+                <tr onclick="submitForm(event)" style="background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
                   <!-- Move the form inside the first column -->
                   <td>
                     <form method="POST">
@@ -170,8 +170,10 @@
           </div>
         </div>
       </div>
-    
-        <div id="hiddenDiv" class="hidden">
+      <div id="loader" style="display: none;">
+        {% include 'loader.html'%}
+      </div>
+        <div id="hiddenDiv" class="hidden">      
           <div class="col-lg-12 col-md-12 mt-2 mb-2">
             <div class ="card z-index-2 p-5" >
               <h2>Matrix Details</h2>
@@ -292,55 +294,86 @@
               </div>
             </div>
           </div>
-        
+
         </div>
+<script>
+  var isLoading = false; // Initialize isLoading variable
+  function submitForm(event) {
+    // Prevent the default form submission behavior
+    event.preventDefault();
 
+    // Check if already loading, if true, return
+    if (isLoading) {
+      return;
+    }
+    
+    // Set isLoading to true to indicate loading state
+    isLoading = true;
+
+    // Get the form element
+    var form = event.currentTarget.querySelector('form');
+    
+    // Submit the form
+    form.submit();
+
+    // Display loader while waiting for response
+    showLoader();
+  }
+
+  // Function to show loader
+  function showLoader() {
+    // Get the loader element and display it
+    var loader = document.getElementById('loader');
+    loader.style.display = 'block';
+  }
+</script>
+        
   <!-- Your JavaScript code for defining traces and layout -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      // Check if matrix dataset exists
-      var matrixDataset = "{{ matrix_data.dataset }}";
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Check if matrix dataset exists
+    var matrixDataset = "{{ matrix_data.dataset }}";
 
-      // Get the div element with the hidden class
-      var hiddenDiv = document.querySelector('.hidden');
+    // Get the div element with the hidden class
+    var hiddenDiv = document.querySelector('.hidden');
 
-      // If matrix dataset exists, remove the hidden class from the div
-      if (matrixDataset && hiddenDiv) {
-        hiddenDiv.classList.remove('hidden');
-      }
-    });
+    // If matrix dataset exists, remove the hidden class from the div
+    if (matrixDataset && hiddenDiv) {
+      hiddenDiv.classList.remove('hidden');
+    }
+  });
 
-    let key = eval(document.querySelector('#key').innerHTML)
-    let value = eval(document.querySelector('#value').innerHTML)
-    let data = key.map((k, index )=> {
-    return {
-      name: k,
-      y: value[index],
-      type: 'box',
-      marker: {
-            color: `hsl(${(index * 360 / key.length)}, 50%, 50%)`
-          },
-          boxpoints: 'suspectedoutliers',
-    }  
-  })
-    var layout = {
-      title: 'Box Plot Styling Mean and Standard Deviation',
-      width: 1450, // Set the width of the plot
-      height: 500
-    };
-    // Plot the box plots
-  Plotly.newPlot('boxplot', data,layout);
+  let key = eval(document.querySelector('#key').innerHTML)
+  let value = eval(document.querySelector('#value').innerHTML)
+  let data = key.map((k, index )=> {
+  return {
+    name: k,
+    y: value[index],
+    type: 'box',
+    marker: {
+          color: `hsl(${(index * 360 / key.length)}, 50%, 50%)`
+        },
+        boxpoints: 'suspectedoutliers',
+  }  
+})
+  var layout = {
+    title: 'Box Plot Styling Mean and Standard Deviation',
+    width: 1450, // Set the width of the plot
+    height: 500
+  };
+  // Plot the box plots
+Plotly.newPlot('boxplot', data,layout);
 
-  function generatePairs(arr) {
-    return arr.flatMap((num1, index1) => 
-        arr.slice(index1 + 1).map((num2, index2) => [num1, num2])
-    ).filter(([num1, num2], index, self) => {
-        const reversePair = [num2, num1];
-        // Check if the reverse pair doesn't exist already
-        return !self.some(([existingNum1, existingNum2], i) => 
-            i < index && existingNum1 === num2 && existingNum2 === num1
-        );
-    });
+function generatePairs(arr) {
+  return arr.flatMap((num1, index1) => 
+      arr.slice(index1 + 1).map((num2, index2) => [num1, num2])
+  ).filter(([num1, num2], index, self) => {
+      const reversePair = [num2, num1];
+      // Check if the reverse pair doesn't exist already
+      return !self.some(([existingNum1, existingNum2], i) => 
+          i < index && existingNum1 === num2 && existingNum2 === num1
+      );
+  });
 }
 
 
@@ -349,29 +382,29 @@ const key_pairs = generatePairs(key);
 // Extract x and y coordinates from pairs
 
 key_pairs.forEach((name, index) => {
-  let xLabel = name[0]
-  let yLabel = name[1]
-  let xVal = value_pairs[index][0]
-  let yVal = value_pairs[index][1]
+let xLabel = name[0]
+let yLabel = name[1]
+let xVal = value_pairs[index][0]
+let yVal = value_pairs[index][1]
 
-  // Create scatter plot
-  const daataa = [{
-      x: xVal,
-      y: yVal,
-      mode: 'markers',
-      type: 'scatter'
-  }];
-  var layout1 = {
-    title: `${xLabel} vs ${yLabel}`,  // Set title of the plot
-    xaxis: {
-        title: xLabel // Set title for x-axis
-    },
-    yaxis: {
-        title: yLabel // Set title for y-axis
-    },
-    width: 1450, // Set the width of the plot
-    height: 500
-  };
+// Create scatter plot
+const daataa = [{
+    x: xVal,
+    y: yVal,
+    mode: 'markers',
+    type: 'scatter'
+}];
+var layout1 = {
+  title: `${xLabel} vs ${yLabel}`,  // Set title of the plot
+  xaxis: {
+      title: xLabel // Set title for x-axis
+  },
+  yaxis: {
+      title: yLabel // Set title for y-axis
+  },
+  width: 1450, // Set the width of the plot
+  height: 500
+};
 const newDiv = document.createElement("div");
 
 // Set the id attribute of the div
