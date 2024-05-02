@@ -18,29 +18,49 @@ default_args = {
     'start_date': datetime(2022, 1, 1),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
+    'schedule': None
 }
 
 
-# Define the DAG
-dag = DAG(
-    'etl_pipeline',
-    default_args=default_args,
-    description='A simple MySQL data pipeline',
-    schedule=None,  # Adjust based on your needs
-)
+# # Define the DAG
+# dag = DAG(
+#     'etl_pipeline',
+#     default_args=default_args,
+#     description='A simple MySQL data pipeline',
+#     schedule=None,  # Adjust based on your needs
+# )
+
+def schedule_dag(**kwargs):
+    schedule_value = kwargs['dag_run'].conf.get('schedule')
+    print(schedule_value)
+    return schedule_value
+
+
+with DAG('etl_pipeline', default_args=default_args) as dag:
+    task_schedule_dag = PythonOperator(
+        task_id='schedule_dag',
+        python_callable=schedule_dag,
+        provide_context=True
+    )
 
 
 def fetch_data(**kwargs):
+    service_name = kwargs['dag_run'].conf.get('service_name')
     table = kwargs['dag_run'].conf.get('selected_table')
     db = kwargs['dag_run'].conf.get('db')
     username = kwargs['dag_run'].conf.get('username')
     host = kwargs['dag_run'].conf.get('host')
     password = kwargs['dag_run'].conf.get('password')
-
-
-    # Create MySQL connection string
-    mysql_conn_str = f"mysql+mysqlconnector://{username}:{password}@{host}:3306/{db}"
-    source_engine = create_engine(mysql_conn_str)
+    source_engine = None
+    print("fetched the date of the user are thew :", {service_name},{table},{db},{username})
+    
+    if service_name == 'mysql':
+        mysql_conn_str = f"mysql+mysqlconnector://{username}:{password}@{host}:3306/{db}"
+        source_engine = create_engine(mysql_conn_str)
+    if service_name == 'postgresql':
+        postgres_conn_str = f"postgresql://{username}:{password}@{host}:5432/{db}"
+        source_engine = create_engine(postgres_conn_str)
+    
     if source_engine:
         print("connected")
         with source_engine.connect() as connection:
@@ -164,4 +184,4 @@ task_calculate_metrics = PythonOperator(
 )
 
 # Define task dependencies
-task_fetch_data >> task_format_data >> task_calculate_metrics
+task_schedule_dag >> task_fetch_data >> task_format_data >> task_calculate_metrics

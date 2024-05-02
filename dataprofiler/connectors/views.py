@@ -105,20 +105,18 @@ def select_warehouse(request):
       
 @login_required(login_url='login')
 def Mysql_connection(request):
-  global connection,database
+  global connection,database,db_username
   if request.method == 'POST':
     username = request.POST.get('username')
     host = request.POST.get('host')
     database = request.POST.get('database')
     password = request.POST.get('password')
     confirm_password = request.POST.get('confirm_password')
-    if Mysql_connector.objects.filter(username=username, host=host).exists():
-      messages.warning(request,'The service connector alredy exists')
-      return redirect(check_connector)
     if password != confirm_password:
       messages.warning(request, 'Confirm password did not match')
     else:
       connection = get_mysql_connection(username, host, password)
+      db_username = username
       if connection and connection != None:  
         Mysql_connector.objects.update_or_create(
           user=request.user,  
@@ -154,20 +152,17 @@ def select_mysql_db(request):
 
 @login_required(login_url='login')
 def PostgreSQL_connection(request):
-  global connection,database
+  global connection,database,db_username
   if request.method == 'POST':
     username = request.POST.get('username')
     host = request.POST.get('host')
     database = request.POST.get('database')
     password = request.POST.get('password')
     confirm_password = request.POST.get('confirm_password')
-    if Mysql_connector.objects.filter(username=username, host=host).exists():
-      messages.warning(request,'The service connector alredy exists')
-      return redirect(check_connector)
     if password != confirm_password:
       messages.warning(request, 'Confirm password did not match')
-    
     connection = get_postgresql_connection(username, host, password)
+    db_username = username
     if connection and connection != None:  
       Mysql_connector.objects.update_or_create(
         service_name = 'postgresql',
@@ -211,7 +206,6 @@ def table_list(request):
         connection.execute(f'use {database}')
         all_tables = connection.execute('show tables').fetchall()
         tables = [table[0] for table in all_tables]
-        print(tables)
         return render(request, 'connections/tables.html', {'tables': tables})   
         
       if user_warehouse.lower() == 'postgresql':
@@ -228,27 +222,19 @@ def table_list(request):
 
 
 def select_table(request):
-  if request.method == 'POST':
-    selected_table = request.POST.getlist('selected_table')      
-    selected_tables_str = ','.join(selected_table)
-    return redirect('selected_table', selected_table=selected_tables_str)
-  else:
-    return HttpResponse("Invalid request method")
-      
-
-def selected_table(request, selected_table):
   global connection,user_warehouse,database,db_username
+  if request.method == 'POST':
+    selected_table = request.POST.getlist('selected_table') 
+    schedule_time = request.POST.getlist('schedule_time')
+
   if connection != None:
     try:
-      print(db_username)
       connector = Mysql_connector.objects.get(user=request.user.id,service_name=user_warehouse.lower(),username = db_username.lower())
-      print(connector)
       user_instance = User.objects.get(id=request.user.id)
       # Triggering airflow DAGs
       dag_id = 'etl_pipeline'
       try:
-        selected_tables_list = selected_table.split(',')
-        for table in selected_tables_list:
+        for table in selected_table:
           data = {
             'conf': f'{{"selected_table":"{table}","connector":"{connector.id}","user":"{connector.user_id}","db":"{database} ","username":"{connector.username}", "host":"{connector.host}","password":"{connector.password}"}}',
             'connector_id':connector.id,
@@ -279,18 +265,19 @@ def selected_table(request, selected_table):
           ingestion_instance.box_plot_data = box_plot_data
           ingestion_instance.save()
           
-          subprocess.run(['airflow', 'dags', 'trigger',dag_id, '-c', f'{{"service_name":"{connector.service_name}","selected_table":"{table}","connector":"{connector.id}","ingestion_id":"{ingestion_instance.id}","user":"{connector.user_id}","db":"{database} ","username":"{connector.username}", "host":"{connector.host}","password":"{connector.password}"}}'], check=True)
-          message = f"DAG {dag_id} triggered successfully"     
-          dag_runs = DagRun.find(dag_id=dag_id)
-          if dag_runs:
-            #check status of dag
-            for dag_run in dag_runs:
-              current_state = dag_run.get_state()
-              print(f"DAG run is currently in state: {current_state}")
-              ingestion_instance.state = current_state
+          for schedule in schedule_time:
+            subprocess.run(['airflow', 'dags', 'trigger',dag_id, '-c', f'{{"service_name":"{connector.service_name}","schedule":"{schedule}","selected_table":"{table}","connector":"{connector.id}","ingestion_id":"{ingestion_instance.id}","user":"{connector.user_id}","db":"{database} ","username":"{connector.username}", "host":"{connector.host}","password":"{connector.password}"}}'], check=True)
+            message = f"DAG {dag_id} triggered successfully"     
+            dag_runs = DagRun.find(dag_id=dag_id)
+            if schedule != None:
+              ingestion_instance.state = 'scheduled'
               ingestion_instance.save()
-              #check status of tasks
-              break 
+            if dag_runs:
+              #check status of dag
+              for dag_run in dag_runs:
+                current_state = dag_run.get_state()
+                print(f"DAG run is currently in state: {current_state}")
+                break 
           
         return redirect('dashboard')
       except subprocess.CalledProcessError as e:

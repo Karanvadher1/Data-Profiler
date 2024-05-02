@@ -25,11 +25,26 @@
                     <div>
                         {% for table in tables %}
                         <div>
-                            <label class="wrap-input100-input validate-input" >
-                                <input type="checkbox" id="{{ table }}" name="selected_table" value="{{ table }}" style="margin-right: 1.5rcap;">
-                                {{ table }}
+                            <label class="wrap-input100-input validate-input " >
+                                <div class="d-flex align-items-baseline">
+                                    <input type="checkbox" id="{{ table }}" name="selected_table" value="{{ table }}" style="margin-right: 1.5rcap;">
+                                    {{ table }}
+                                    <div class="ml-auto p-2">
+                                        <label id ={{table}} for="schedule_time_{{table}}">Schedule: </label>
+                                        <select name="schedule_time" id="schedule_time_{{table}}" disabled>
+                                            <option value="None">None</option>
+                                            <option value="@once">ONCE</option>
+                                            <option value='*/1 * * * *'>Minuts</option>
+                                            <option value="@hourly">HOURLY</option>
+                                            <option value="@daily">DAILY</option>
+                                            <option value="@weekly">WEEKLY</option>
+                                            <option value="@monthly">MONTHLY</option>
+                                            <option value="@yearly">YEARLY</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </label><br>
-                            {% endfor %}
+                        {% endfor %}
                         </div>
                     </div>
                     <div class="container-login100-form-btn m-t-17">
@@ -42,5 +57,16 @@
         </div>
     </div>
     {% include 'include/alerts.html' %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    var select = this.parentElement.querySelector('select');
+                    select.disabled = !this.checked;
+                });
+            });
+        });
+    </script>
 </body>
 </html>

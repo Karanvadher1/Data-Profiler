@@ -18,6 +18,8 @@ from django.db.models import Count
 from django.db.models import Count, Exists, OuterRef
 import tensorflow as tf
 import tensorflow_probability as tfp
+from connectors.views import select_table
+
 
 def home(request):
   if request.user.is_authenticated:
@@ -98,9 +100,14 @@ def dashboard(request):
   box_value_data = []
 
   ingestion_data = Ingestion.objects.filter(user_id=request.user.id).order_by('-start_date').all()
- 
-  for ingestion in ingestion_data:  
   
+  for ingestion in ingestion_data:
+    if Matrix.objects.filter(ingestion_id = ingestion.id).exists:
+      if ingestion.state != 'success':
+        ingestion.state = 'success'
+        ingestion.save()
+    else:
+      ingestion.state = 'Failed'
     data_dict = {
       'id':ingestion.id,
       'selected_table': json.loads(ingestion.conf)['selected_table'],
@@ -109,6 +116,7 @@ def dashboard(request):
       'interval_end': ingestion.data_interval_end.strftime('%Y-%m-%d %H:%M:%S'),  # Format as desired
       'state': ingestion.state
     }
+    
     ingestion_data_list.append(data_dict)  
   #getting ingestion record from user 
   if request.method == 'POST':
@@ -124,33 +132,37 @@ def dashboard(request):
           box_column_data.append(column_name)
           values_list = list(values.values())
           box_value_data.append(values_list)
-            
-    if box_value_data is not None:
-      try:
-        
-        box_value_dataframe = pd.DataFrame(box_value_data)
-        box_value_tensor = tf.constant(box_value_dataframe.values, dtype=tf.float32)
-        correlation_matrix = tfp.stats.correlation(box_value_tensor, sample_axis=0)
-        rounded_correlation_matrix = tf.round(correlation_matrix, 4)
-        print("Correlation Matrix:")
-        print(correlation_matrix)
-        print(rounded_correlation_matrix)
-        # mean = tf.reduce_mean(box_value_tensor, axis=0)
-        # print(mean)
-        # stddev = tf.sqrt(tf.reduce_mean(tf.square(box_value_tensor - mean), axis=0))
-        # print(stddev)
-        # normalized_data = (box_value_tensor - mean) / stddev
-        # correlation_matrix = tf.matmul(box_value_tensor, box_value_tensor, transpose_a=True) / tf.cast(tf.shape(normalized_data)[0], tf.float32)
-        # Corr_Matrix = tf.round(box_value_tensor.corr(),2)
-        # print('coreellaattion:',Corr_Matrix)
-        # print(box_value_dataframe)
-      except Exception as e:
-        print("An error occurred:", e)
-    # Prepare the data dictionary to pass to the template
+           
+    # if box_value_data is not None:
+    #   try:
+    #     box_value_dataframe = pd.DataFrame(box_value_data)
+    #     box_value_tensor = tf.constant(box_value_dataframe.values, dtype=tf.float32)
+    #     correlation_matrix = tfp.stats.correlation(box_value_tensor, sample_axis=0)
+    #     rounded_correlation_matrix = tf.round(correlation_matrix)
+    #     print("Correlation Matrix:")
+    #     print(correlation_matrix)
+    #     print(rounded_correlation_matrix)
+    #     # mean = tf.reduce_mean(box_value_tensor, axis=0)
+    #     # print(mean)
+    #     # stddev = tf.sqrt(tf.reduce_mean(tf.square(box_value_tensor - mean), axis=0))
+    #     # print(stddev)
+    #     # normalized_data = (box_value_tensor - mean) / stddev
+    #     # correlation_matrix = tf.matmul(box_value_tensor, box_value_tensor, transpose_a=True) / tf.cast(tf.shape(normalized_data)[0], tf.float32)
+    #     # Corr_Matrix = tf.round(box_value_tensor.corr(),2)
+    #     # print('coreellaattion:',Corr_Matrix)
+    #     # print(box_value_dataframe)
+    #   except Exception as e:
+    #     print("An error occurred:", e)
+    # # Prepare the data dictionary to pass to the template
     
     if selected_ingestion:
       matrix = Matrix.objects.filter(ingestion_id=selected_ingestion).first()
       if matrix:
+        ingestion_record = Ingestion.objects.get(id=selected_ingestion)
+        if ingestion_record.state != 'success':
+          ingestion_record.state = 'success'
+          ingestion_record.save()
+          
         matrix_data = {
           'id': matrix.ingestion_id,
           'dataset': matrix.dataset,
@@ -176,8 +188,8 @@ def dashboard(request):
   page_number = request.GET.get('page')
   page_obj = paginator.get_page(page_number)  
 
-  success_count = Ingestion.objects.filter(matrix__isnull=False, user_id=request.user.id).distinct().count()
-  failed_count = Ingestion.objects.filter(user_id = request.user.id,matrix__isnull=True).annotate(matrix_count=Count('matrix')).filter(matrix_count=0).count()
+  success_count = Ingestion.objects.filter(user_id=request.user.id,state = 'success').count()
+  failed_count = Ingestion.objects.filter(user_id=request.user.id,state = 'Failed').count()
   total_count = Ingestion.objects.filter(user_id=request.user.id).count()
   
   context = {

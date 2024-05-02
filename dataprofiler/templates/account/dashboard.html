@@ -26,7 +26,14 @@
   <title>Dashboard</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+  <style>
+    .success {
+        background-color: lightgreen;
+    }
+    .queued {
+        background-color: lightgrey;
+    }
+</style>
 </head>
 <body class="g-sidenav-show  bg-gray-200">
   <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3   bg-gradient-dark" id="sidenav-main">
@@ -136,7 +143,7 @@
                   <td>{{ data.start_date }}</td>
                   <td>{{ data.interval_start }}</td>
                   <td>{{ data.interval_end }}</td>
-                  <td>{{ data.state }}</td>
+                  <td class="{% if data.state == 'success' %}success{% elif data.state == 'queued' %}queued{% endif %}" border: 1px solid black>{{ data.state }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
