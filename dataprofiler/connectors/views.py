@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from account.models import User
 from dataprofiler import settings
-from .database import get_mysql_connection, get_postgresql_connection
+from .database import get_mysql_connection, get_postgresql_connection, get_postgresql_db_connection
 from .models import Data_Warehouse, Ingestion,Mysql_connector
 from django.contrib.auth.decorators import login_required
 from airflow.models import DagRun
@@ -18,60 +18,6 @@ connection = None
 database =None
 user_warehouse = None
 db_username= None
-
-
-@login_required(login_url='login')
-def check_connector(request):
-  try:
-    connector = Mysql_connector.objects.filter(user_id=request.user.id)
-    connector_details = []
-    if connector:
-      for conn in connector:
-        id = conn.id
-        service = conn.service_name
-        db_username = conn.username
-        connector_details.append({'id':id,'service':service,'username':db_username})
-    return render(request,'connections/my_connector.html',{'connector_details':connector_details})
-  except:
-    messages.warning(request,"You have not made any connector yet!")
-    return redirect('db_warehouse')  
-  
-  
-@login_required(login_url='login')
-def select_connector(request):
-  global connection,user_warehouse,db_username
-  if request.method == 'POST':
-    db_username = request.POST.get('connector_id')
-    if db_username != None:
-      connector = get_object_or_404(Mysql_connector, username=db_username)
-      if connector.service_name.lower() == 'mysql':
-        user_warehouse = 'mysql'
-        connection = get_mysql_connection(connector.username,connector.host,connector.password)
-        if connection != None:
-          messages.success(request, f'Connected to MySQL Database successfully')
-          return redirect('list_mysql_db')   
-        else:
-          messages.error(request, 'Failed to connect to MySQL database')
-      if connector.service_name.lower() == 'postgresql':
-        user_warehouse = 'postgresql'
-        connection = get_postgresql_connection(connector.username,connector.host,connector.password)
-        if connection != None:
-          messages.success(request, f'Connected to PostgreSQL Database : {connector.database} successfully')
-          return redirect('table_list')   
-        else:
-          messages.error(request, 'Failed to connect to MySQL database')
-    return render(request, 'account/dashboard.html')
-
-
-@login_required(login_url='login')
-def delete_connector(request):
-  if request.method == 'GET' and 'delete_connector_id' in request.GET:
-    connector_id = request.GET.get('delete_connector_id')
-    if connector_id is not None:
-      connector = get_object_or_404(Mysql_connector, id=connector_id)
-      connector.delete()
-      messages.success(request, 'Connector deleted successfully')
-  return redirect('check_connector')
 
 
 @login_required(login_url='login')
@@ -209,8 +155,11 @@ def table_list(request):
         return render(request, 'connections/tables.html', {'tables': tables})   
         
       if user_warehouse.lower() == 'postgresql':
+        connector = Mysql_connector.objects.get(user=request.user.id,service_name=user_warehouse.lower(),username = db_username.lower())
+        connection = get_postgresql_db_connection(connector.username,connector.host,connector.password,database)
         all_tables = connection.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'").fetchall()
         tables = [table[0] for table in all_tables]
+        print(tables)
         return render(request, 'connections/tables.html', {'tables': tables})   
       else:
           return HttpResponse("Invalid warehouse type")
@@ -249,19 +198,15 @@ def select_table(request):
             'user': user_instance
           }
           ingestion_instance = Ingestion.create_ingestion(**data)
-          # Fetch data from the database
-          result = connection.execute(f'SELECT * FROM {table}').fetchall()
-          # Convert SQLAlchemy object into dict
+    
+          result = connection.execute(f'SELECT * FROM {table}').fetchall()      
           serialized_data = [dict(row) for row in result]
           df = pd.DataFrame(serialized_data)
-          # Calculate box plot data
           if 'id' in df.columns:
             df.drop(columns='id', inplace=True)
           numeric_columns = df.select_dtypes(include=['int', 'float'])
           numeric_columns = numeric_columns.dropna()
           box_plot_data = numeric_columns.to_dict()
-          
-          # Save box plot data to ingestion instance
           ingestion_instance.box_plot_data = box_plot_data
           ingestion_instance.save()
           
@@ -278,7 +223,6 @@ def select_table(request):
                 current_state = dag_run.get_state()
                 print(f"DAG run is currently in state: {current_state}")
                 break 
-          
         return redirect('dashboard')
       except subprocess.CalledProcessError as e:
           message = f"Error triggering DAG {dag_id}: {e}"
@@ -288,5 +232,60 @@ def select_table(request):
   else:
       return HttpResponse("Connection is not established.")
     
+
+@login_required(login_url='login')
+def check_connector(request):
+  try:
+    connector = Mysql_connector.objects.filter(user_id=request.user.id)
+    connector_details = []
+    if connector:
+      for conn in connector:
+        id = conn.id
+        service = conn.service_name
+        db_username = conn.username
+        connector_details.append({'id':id,'service':service,'username':db_username})
+    return render(request,'connections/my_connector.html',{'connector_details':connector_details})
+  except:
+    messages.warning(request,"You have not made any connector yet!")
+    return redirect('db_warehouse')  
+  
+  
+@login_required(login_url='login')
+def select_connector(request):
+  global connection,user_warehouse,db_username
+  if request.method == 'POST':
+    db_username = request.POST.get('connector_id')
+    if db_username != None:
+      connector = get_object_or_404(Mysql_connector, username=db_username,user_id = request.user.id)
+      if connector.service_name.lower() == 'mysql':
+        user_warehouse = 'mysql'
+        connection = get_mysql_connection(connector.username,connector.host,connector.password)
+        if connection != None:
+          messages.success(request, f'Connected to MySQL Database successfully')
+          return redirect('list_mysql_db')   
+        else:
+          messages.error(request, 'Failed to connect to MySQL database')
+      if connector.service_name.lower() == 'postgresql':
+        user_warehouse = 'postgresql'
+        connection = get_postgresql_connection(connector.username,connector.host,connector.password)
+        if connection != None:
+          messages.success(request, f'Connected to PostgreSQL Database : {connector.database} successfully')
+          return redirect('table_list')   
+        else:
+          messages.error(request, 'Failed to connect to MySQL database')
+    return render(request, 'account/dashboard.html')
+
+
+@login_required(login_url='login')
+def delete_connector(request):
+  if request.method == 'GET' and 'delete_connector_id' in request.GET:
+    connector_id = request.GET.get('delete_connector_id')
+    if connector_id is not None:
+      connector = get_object_or_404(Mysql_connector, id=connector_id)
+      connector.delete()
+      messages.success(request, 'Connector deleted successfully')
+  return redirect('check_connector')
+
+
 def custom_404_view(request, exception):
     return render(request, '404.html', status=404)

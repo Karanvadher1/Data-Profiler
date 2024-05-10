@@ -126,11 +126,12 @@
                   <th>Interval Start</th>
                   <th>Interval End</th>
                   <th>State</th>
+                  <th>Logs</th>
                 </tr>
               </thead>
               <tbody>
                 {% for data in ingestion_data %}
-                <tr onclick="submitForm(event)" style="background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
+                <tr onclick="submitForm(event)" style="position: relative; background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
                   <!-- Move the form inside the first column -->
                   <td>
                     <form method="POST">
@@ -145,6 +146,13 @@
                   <td>{{ data.interval_end }}</td>
                   <td class="{% if data.state == 'success' %}success{% elif data.state == 'queued' %}queued{% endif %}" border: 1px solid black>{{ data.state }}</td>
                 </tr>
+                <td style="position: absolute; margin-left: 1350px; margin-top: -30px;">
+                  <form action="{% url 'list_log'%}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="ingestion_id" value="{{ data.id }}">
+                    <button type="submit">View Logs</button>
+                  </form>
+                </td>
                 {% endfor %}
               </tbody>
             </table>
@@ -180,7 +188,7 @@
       <div id="loader" style="display: none;">
         {% include 'loader.html'%}
       </div>
-        <div id="hiddenDiv" class="hidden">      
+        <div id="hiddenDiv" class="hidden"> 
           <div class="col-lg-12 col-md-12 mt-2 mb-2">
             <div class ="card z-index-2 p-5" >
               <h2>Matrix Details</h2>

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.db import models
 from account.models import User
 
@@ -22,14 +23,14 @@ class Ingestion(models.Model):
   conf = models.TextField()
   dag_id = models.CharField(max_length=255)
   dag_run_id = models.CharField(max_length=255)
-  data_interval_start = models.DateTimeField(auto_now_add=True)
-  data_interval_end = models.DateTimeField(auto_now_add=True)
+  data_interval_start = models.DateTimeField()
+  data_interval_end = models.DateTimeField()
   end_date = models.DateTimeField(null=True, blank=True)
   external_trigger = models.BooleanField()
   last_scheduling_decision = models.CharField(max_length=255,null=True)
-  logical_date = models.DateTimeField(auto_now_add=True)
+  logical_date = models.DateTimeField()
   run_type = models.CharField(max_length=255)
-  start_date = models.DateTimeField(auto_now_add=True)
+  start_date = models.DateTimeField()
   state = models.CharField(max_length=50)
   box_plot_data = models.JSONField(null=True, blank=True)
   
@@ -39,6 +40,19 @@ class Ingestion(models.Model):
   
   def __str__(self):
       return f"DAG Run ID: {self.dag_run_id}, State: {self.state}"
+    
+  def save(self, *args, **kwargs):
+    self.data_interval_start = datetime.now()
+    self.data_interval_end = datetime.now()
+    self.start_date = datetime.now()
+    self.logical_date = datetime.now()
+    
+    # Add 5 hours and 30 minutes to data_interval_start
+    self.data_interval_start += timedelta(hours=5, minutes=30)
+    self.data_interval_end +=timedelta(hours=5,minutes=30)
+    self.start_date += timedelta(hours=5,minutes=30)
+    self.logical_date += timedelta(hours=5,minutes=30)
+    super().save(*args, **kwargs)
     
     
 class Matrix(models.Model):

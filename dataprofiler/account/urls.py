@@ -12,10 +12,11 @@ urlpatterns = [
    path('reset_password/',views.reset_password,name='reset_password'),
    
    path('activate/<uidb64>/<token>',views.activate,name='activate'),
-   
    path('dashboard/',views.dashboard,name='dashboard'), 
    path('dashboard/', views.dashboard, name='dashboard_with_pagination'),
    path('dashboard/<str:box_plot>/', views.dashboard, name='dashboard'),
+
+   path('list_log/', views.list_log, name='list_log'),
 
 ] 
 

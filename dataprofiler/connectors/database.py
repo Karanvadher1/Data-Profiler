@@ -20,3 +20,15 @@ def get_postgresql_connection(username, host, password):
     except Exception as e:
         print(f"Error connecting to PostgreSQL: {e}")
         return None
+    
+    
+def get_postgresql_db_connection(username,host,password,database):
+    try:        
+        postgres_conn_str = f"postgresql://{username}:{password}@{host}:5432/{database}"
+        engine = create_engine(postgres_conn_str)
+        conn = engine.connect()
+        return conn
+    except Exception as e:
+        print(f"Error connecting to PostgreSQL: {e}")
+        return None
+    

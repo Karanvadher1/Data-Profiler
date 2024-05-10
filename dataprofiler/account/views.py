@@ -1,7 +1,8 @@
 # Create your views here.
 from datetime import datetime
+import fnmatch
 import json
-
+import os
 import pandas as pd
 from connectors.models import Matrix,Ingestion
 from .utils import send_verification_email
@@ -98,9 +99,10 @@ def dashboard(request):
   std = []
   box_column_data = []
   box_value_data = []
+  logs = None
 
   ingestion_data = Ingestion.objects.filter(user_id=request.user.id).order_by('-start_date').all()
-  
+
   for ingestion in ingestion_data:
     if Matrix.objects.filter(ingestion_id = ingestion.id).exists:
       if ingestion.state != 'success':
@@ -125,6 +127,7 @@ def dashboard(request):
     
     if box_plot_data_query:
       box_plot_data = box_plot_data_query[0]
+      
       # Extract column names and data from the box plot data dictionary
       if box_plot_data is not None:
         for column_name, values in box_plot_data.items():
@@ -153,7 +156,7 @@ def dashboard(request):
     #     # print(box_value_dataframe)
     #   except Exception as e:
     #     print("An error occurred:", e)
-    # # Prepare the data dictionary to pass to the template
+    #   Prepare the data dictionary to pass to the template
     
     if selected_ingestion:
       matrix = Matrix.objects.filter(ingestion_id=selected_ingestion).first()
@@ -202,11 +205,63 @@ def dashboard(request):
     'null_values':json.dumps(null_values),
     'col1':json.dumps(col1),
     'std':json.dumps(std),
+    'log' : logs,
   }
   if box_column_data and box_value_data:
       context['box_column_data'] = box_column_data
       context['box_value_data'] = box_value_data
   return render(request,'account/dashboard.html',context)
+
+
+def list_log(request):
+  if request.method == 'POST':
+    selected_ingestion = request.POST.get('ingestion_id')
+    dag_run = Ingestion.objects.filter(id=selected_ingestion).values_list('dag_run_id').first()
+    if dag_run:
+      dag_run_id = dag_run[0]
+      datetime_obj = datetime.strptime(dag_run_id, "manual__%Y-%m-%dT%H:%M:%S.%f")
+      target_directory = datetime_obj.strftime("manual__%Y-%m-%dT%H:%M")
+      print(target_directory)
+      log_file,log = airflow_log(target_directory)
+      return render(request,'account/airflow_log.html',{'log_file':log_file,'log':log})
+
+
+def airflow_log(substring):
+  directory_path = '/home/master/airflow/logs/dag_id=etl_pipeline'
+  log_file = []
+  log = []
+  try:
+    matching_folders = [name for name in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, name)) and substring in name]
+    for folder in matching_folders:
+      match_folder_path = os.path.join(directory_path,folder)
+      if os.path.exists(match_folder_path) and os.path.isdir(match_folder_path):
+        directory_contents = os.listdir(match_folder_path)
+        for content in directory_contents:
+          log_file.append(content)
+          final_path = os.path.join(match_folder_path,content)
+          if os.path.exists(final_path) and os.path.isdir(final_path):
+              dirs = os.listdir(final_path)
+              for dir in dirs:
+                log_file_path = os.path.join(final_path, dir)
+                with open(log_file_path, 'r') as f:
+                  lines = f.readlines()
+                  combined_log = ""
+                  for i, line in enumerate(lines):
+                      if "INFO" in line:
+                          # Check if "INFO" is at the end of the line and there's more content in the next line
+                          if line.strip().endswith("INFO") and i < len(lines) - 1:
+                              combined_log += line.strip() + " " + lines[i + 1].strip() + "\n"
+                          else:
+                              combined_log += line.strip() + "\n"
+                  log.append(combined_log)
+      else:
+        print("Directory '{}' does not exist or is not a directory.".format(directory_path))
+    return log_file,log
+  except:
+    print("No Logs Found")
+    
+   
+    
 
 
 def logout(request):
