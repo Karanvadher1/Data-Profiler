@@ -28,10 +28,12 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     .success {
-        background-color: lightgreen;
+        color: darkgreen;
+        font-weight: bold;
     }
-    .queued {
-        background-color: lightgrey;
+    .failed {
+        color: darkred;
+        font-weight: bold;
     }
 </style>
 </head>
@@ -129,11 +131,11 @@
                   <th>Logs</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody >
                 {% for data in ingestion_data %}
-                <tr onclick="submitForm(event)" style="position: relative; background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
+                <tr>
                   <!-- Move the form inside the first column -->
-                  <td>
+                  <td onclick="submitForm(event)" style="position: relative; background-color: {% if selected_ingestion == data.id %}lightblue;{% endif %}" onmouseover="this.style.backgroundColor='lightgrey';" onmouseout="this.style.backgroundColor=''">
                     <form method="POST">
                       {% csrf_token %}
                       <input type="hidden" name="ingestion_id" value="{{ data.id }}">
@@ -141,18 +143,21 @@
                     {{ data.selected_table }}
                   </td>
                   <!-- The rest of the columns are not part of the form -->
-                  <td>{{ data.start_date }}</td>
+                  <td >{{ data.start_date }}</td>
                   <td>{{ data.interval_start }}</td>
                   <td>{{ data.interval_end }}</td>
-                  <td class="{% if data.state == 'success' %}success{% elif data.state == 'queued' %}queued{% endif %}" border: 1px solid black>{{ data.state }}</td>
+                  <td class="{% if data.state == 'success' %}success{% elif data.state == 'failed' %}failed{% endif %}" border: 1px solid black>{{ data.state }}</td>
+                  <td >
+                    <form id="myForm" action="{% url 'list_log'%}" method="POST">
+                      {% csrf_token %}
+                      <input type="hidden" name="ingestion_id" value="{{ data.id }}">
+                    </form>
+                    
+                    <a href="#" onclick="document.getElementById('myForm').submit(); return false;">View Logs</a>
+                    
+                  </td>
                 </tr>
-                <td style="position: absolute; margin-left: 1350px; margin-top: -30px;">
-                  <form action="{% url 'list_log'%}" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="ingestion_id" value="{{ data.id }}">
-                    <button type="submit">View Logs</button>
-                  </form>
-                </td>
+                
                 {% endfor %}
               </tbody>
             </table>

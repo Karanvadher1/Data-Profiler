@@ -1,11 +1,10 @@
 # Create your views here.
 from datetime import datetime
-import fnmatch
 import json
 import os
 import pandas as pd
 from connectors.models import Matrix,Ingestion
-from .utils import send_verification_email
+from .utils import send_verification_email,airflow_log
 from .models import User
 from django.contrib import auth,messages
 from django.contrib.auth.decorators import login_required
@@ -17,8 +16,8 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from django.db.models import Count
 from django.db.models import Count, Exists, OuterRef
-import tensorflow as tf
-import tensorflow_probability as tfp
+# import tensorflow as tf
+# import tensorflow_probability as tfp
 from connectors.views import select_table
 
 
@@ -85,7 +84,7 @@ def activate(request,uidb64,token):
     return redirect('login')
   else:
     messages.error(request,'Invalid activation link')
-    return redirect('account/registeruser')
+    return redirect('registeruser')
 
 
 @login_required(login_url='login')
@@ -160,12 +159,7 @@ def dashboard(request):
     
     if selected_ingestion:
       matrix = Matrix.objects.filter(ingestion_id=selected_ingestion).first()
-      if matrix:
-        ingestion_record = Ingestion.objects.get(id=selected_ingestion)
-        if ingestion_record.state != 'success':
-          ingestion_record.state = 'success'
-          ingestion_record.save()
-          
+      if matrix:          
         matrix_data = {
           'id': matrix.ingestion_id,
           'dataset': matrix.dataset,
@@ -224,47 +218,9 @@ def list_log(request):
       print(target_directory)
       log_file,log = airflow_log(target_directory)
       return render(request,'account/airflow_log.html',{'log_file':log_file,'log':log})
-
-
-def airflow_log(substring):
-  directory_path = '/home/master/airflow/logs/dag_id=etl_pipeline'
-  log_file = []
-  log = []
-  try:
-    matching_folders = [name for name in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, name)) and substring in name]
-    for folder in matching_folders:
-      match_folder_path = os.path.join(directory_path,folder)
-      if os.path.exists(match_folder_path) and os.path.isdir(match_folder_path):
-        directory_contents = os.listdir(match_folder_path)
-        for content in directory_contents:
-          log_file.append(content)
-          final_path = os.path.join(match_folder_path,content)
-          if os.path.exists(final_path) and os.path.isdir(final_path):
-              dirs = os.listdir(final_path)
-              for dir in dirs:
-                log_file_path = os.path.join(final_path, dir)
-                with open(log_file_path, 'r') as f:
-                  lines = f.readlines()
-                  combined_log = ""
-                  for i, line in enumerate(lines):
-                      if "INFO" in line:
-                          # Check if "INFO" is at the end of the line and there's more content in the next line
-                          if line.strip().endswith("INFO") and i < len(lines) - 1:
-                              combined_log += line.strip() + " " + lines[i + 1].strip() + "\n"
-                          else:
-                              combined_log += line.strip() + "\n"
-                  log.append(combined_log)
-      else:
-        print("Directory '{}' does not exist or is not a directory.".format(directory_path))
-    return log_file,log
-  except:
-    print("No Logs Found")
     
    
-    
-
-
-def logout(request):
+def logout(request):  
   auth.logout(request)
   messages.info(request, 'You are loggedout')
   return redirect('home')
@@ -274,7 +230,7 @@ def forgot_password(request):
   if request.method == 'POST':
     email = request.POST['email']
 
-    if User.objects.filter(email=email).exists():
+    if User.objects.get(email=email).exists():
       user = User.objects.get(email__exact = email)
       #send reset password email
       mail_subject = 'Reset your Password'

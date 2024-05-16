@@ -50,7 +50,7 @@
 <script>
   function deleteConnector(connectorId) {
     if (confirm('Are you sure you want to delete this connector?')) {
-      var deleteUrl = "{% url 'delete_connector' %}?delete_connector_id=" + connectorId;
+      var deleteUrl = "{% url 'delete_connector'%}?delete_connector_id=" + connectorId;
       window.location.href = deleteUrl;
     }
   }
